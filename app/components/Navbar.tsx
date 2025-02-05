@@ -1,9 +1,18 @@
-'use client'
+'use client';
 
-import Link from "next/link"
-import Logo from "./Logo"
+import { useEffect, useState } from 'react';
+import Link from "next/link";
+import Logo from "./Logo";
 
 export default function Navbar() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) return null;
+
   return (
     <nav className="bg-[#2D4F1E] text-[#FAF6F1] p-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
@@ -38,6 +47,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }
-
