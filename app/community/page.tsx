@@ -27,14 +27,6 @@ export default function CommunityPage() {
               robust "guide" saving functionality. We're also developing educator, parent, and child dashboards with
               calendar integrations and grading systems.
             </p>
-            <div className="mt-6">
-              <Link
-                href="/careers"
-                className="bg-[#FAF6F1] text-[#2D4F1E] px-6 py-3 rounded-full text-lg font-semibold hover:bg-[#FAF6F1]/90 transition-colors inline-block"
-              >
-                Join Our Team
-              </Link>
-            </div>
           </section>
 
           <section>
