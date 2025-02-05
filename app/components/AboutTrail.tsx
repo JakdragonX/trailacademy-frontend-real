@@ -60,7 +60,7 @@ export default function AboutTrail() {
           </div>
           <div className="mt-12 text-center">
             <Link
-              href="/how-it-works"
+              href="/mission"
               className="inline-flex items-center text-lg font-semibold text-[#2D4F1E] hover:text-[#8B4513] transition-colors"
             >
               Learn more about how Trail Academy works

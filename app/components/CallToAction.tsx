@@ -22,7 +22,7 @@ export default function CallToAction() {
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              href="/create-course"
+              href="/create"
               className="group bg-[#8B4513] text-[#FAF6F1] px-6 py-3 rounded-full text-lg font-semibold hover:bg-[#8B4513]/90 transition-all duration-300 flex items-center"
             >
               Create a Course
