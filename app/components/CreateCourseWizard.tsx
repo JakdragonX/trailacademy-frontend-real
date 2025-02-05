@@ -8,6 +8,7 @@ import { LoadingState } from './LoadingState'
 import { StudentModuleView } from './StudentModuleView'
 import { Button } from '@/components/ui/button'
 import { createCourse } from '@/lib/courseService'
+import { ModuleList } from '@/components/ModuleList'
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState('type')
