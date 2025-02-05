@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 45, 79, 30;
+  --background-rgb: 250, 246, 241;
+  --accent-rgb: 139, 69, 19;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+@layer utilities {
+  .rounded-xl-2xl {
+    border-radius: 1rem 2rem;
+  }
+  .rounded-2xl-xl {
+    border-radius: 2rem 1rem;
+  }
+}
+
+.bg-\[#2D4F1E\] {
+  border-radius: 0 !important;
+}
+
