@@ -14,7 +14,8 @@ export const DialogContent = React.forwardRef(({ children, className, ...props }
     <DialogPrimitive.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm">
       <DialogPrimitive.Content
         ref={ref}
-        className={`fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg ${className}`}
+        className={`fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-lg p-6 shadow-lg ${className}`}
+        style={{ backgroundColor: 'white' }} // Force the background color for testing
         {...props}
       >
         {children}
