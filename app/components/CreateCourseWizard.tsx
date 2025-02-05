@@ -17,6 +17,9 @@ export function CreateCourseWizard() {
   const [courseType, setCourseType] = useState(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
 
+  // Define state for preview module
+  const [previewModule, setPreviewModule] = useState(null)
+
   const handleGenerate = async (specs) => {
     setIsGenerating(true)
     try {
@@ -106,7 +109,7 @@ export function CreateCourseWizard() {
         </div>
       )}
 
-{step === 'preview' && courseData && (
+      {step === 'preview' && courseData && (
         <div className="space-y-6">
           <div className="flex items-center justify-between mb-6">
             <button 
