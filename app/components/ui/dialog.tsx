@@ -15,7 +15,6 @@ export const DialogContent = React.forwardRef(({ children, className, ...props }
       <DialogPrimitive.Content
         ref={ref}
         className={`fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-lg p-6 shadow-lg ${className}`}
-        style={{ backgroundColor: 'white' }} // Force the background color for testing
         {...props}
       >
         {children}
