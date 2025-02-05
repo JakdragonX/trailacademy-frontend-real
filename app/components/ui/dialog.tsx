@@ -18,7 +18,7 @@ export const DialogContent = React.forwardRef(({ children, className, ...props }
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-90 hover:opacity-100">
           <X className="h-4 w-4" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
