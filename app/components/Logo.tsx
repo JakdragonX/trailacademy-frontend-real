@@ -5,7 +5,7 @@ import Image from "next/image"
 export default function Logo() {
   return (
     <Link href="/" className="flex items-center space-x-3">
-      <div className="w-10 h-10 flex items-center justify-center">
+      <div className="w-10 h-10 flex items-center justify-center rounded-full border-4 border-white overflow-hidden">
         <Image
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/trail%20copy%20png%20icon-M3EHusVbHVSktiYuDPcKCkbldxV4hR.png"
           alt="Trail Logo"
