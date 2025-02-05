@@ -67,7 +67,7 @@ export default function MissionPage() {
 
           <div className="text-center mt-12">
             <a
-              href="/join-us"
+              href="/community"
               className="bg-[#2D4F1E] text-[#FAF6F1] px-6 py-3 rounded-full text-lg font-semibold hover:bg-[#2D4F1E]/90 transition-colors"
             >
               Join Our Community
