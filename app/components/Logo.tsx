@@ -12,7 +12,7 @@ export default function Logo() {
           width={40}
           height={40}
           className="object-contain"
-          style="color:transparent; object-position: center; transform: scale(1.25);"
+          style="color:transparent; object-position: center; transform: scale(1.5);"
         />
       </div>
       <span className="text-2xl font-bold tracking-wider text-[#FAF6F1]">trail academy</span>
