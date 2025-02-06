@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { Card, CardContent } from "@/components/ui/card"
-import { Eye, GripVertical, Edit2 } from 'lucide-react'
+import { Eye, GripVertical, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
@@ -17,7 +17,7 @@ export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    const newModules = items.filter(item => item.id.startsWith('module'))
+    const newModules = items.filter((item) => item.id.startsWith("module"))
     setModules(newModules)
     // Here you would typically update the course data with the new order
   }
@@ -49,11 +49,9 @@ export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
                             </div>
                             <div>
                               <h3 className="text-xl font-semibold text-[#2D4F1E]">
-                                {item.title || `${item.id.startsWith('module') ? 'Module' : 'Exam'} ${index + 1}`}
+                                {item.title || `${item.id.startsWith("module") ? "Module" : "Exam"} ${index + 1}`}
                               </h3>
-                              <p className="text-gray-600 mt-1">
-                                {item.description || "No description available."}
-                              </p>
+                              <p className="text-gray-600 mt-1">{item.description || "No description available."}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -66,7 +64,7 @@ export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
                               <Eye className="h-4 w-4" />
                               Preview
                             </Button>
-                            {item.id.startsWith('module') && (
+                            {item.id.startsWith("module") && (
                               <Button
                                 variant="outline"
                                 size="sm"
