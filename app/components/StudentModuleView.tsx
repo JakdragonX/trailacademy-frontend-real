@@ -59,9 +59,15 @@ export function StudentModuleView({ module, onClose }) {
                       <div className="p-2 bg-[#2D4F1E]/5 rounded-lg">
                         <Book className="h-5 w-5 text-[#2D4F1E]" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h4 className="font-medium text-[#2D4F1E]">{reading.title}</h4>
                         <p className="text-sm text-gray-600 mt-1">Pages: {reading.pages}</p>
+                        {reading.content && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-sm text-[#2D4F1E]">View Content</summary>
+                            <div className="mt-2 p-2 bg-gray-50 rounded text-sm">{reading.content}</div>
+                          </details>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -86,10 +92,17 @@ export function StudentModuleView({ module, onClose }) {
                           <Clock className="h-4 w-4" />
                           <span>{video.duration}</span>
                         </div>
+                        {video.url && (
+                          <a
+                            href={video.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-sm text-[#2D4F1E] hover:underline"
+                          >
+                            Watch Video
+                          </a>
+                        )}
                       </div>
-                      <Button variant="outline" size="sm">
-                        Watch
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
