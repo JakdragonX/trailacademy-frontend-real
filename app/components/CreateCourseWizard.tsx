@@ -7,14 +7,14 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle } from 'lucide-react'
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
   const [courseType, setCourseType] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [generatedCourse, setGeneratedCourse] = useState(null)
+  const [generatedCourse, setGeneratedCourse] = useState<any>(null)
   const [courseId, setCourseId] = useState<string | null>(null)
 
   const handleCourseTypeSelection = (type: string) => {
@@ -61,11 +61,11 @@ export function CreateCourseWizard() {
         const response = await fetch(`/api/courses/status?courseId=${courseId}`)
         const data = await response.json()
 
-        if (data.status === "completed") {
+        if (data.status === 'completed') {
           setGeneratedCourse(data)
           setStep(3)
           setIsLoading(false)
-        } else if (data.status === "error") {
+        } else if (data.status === 'error') {
           throw new Error("Course generation failed")
         } else {
           setTimeout(pollCourseStatus, 5000) // Poll every 5 seconds
