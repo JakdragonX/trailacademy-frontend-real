@@ -1,149 +1,80 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { kv } from '@vercel/kv'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-const systemPrompt = `You are an expert course creator. You MUST respond with ONLY valid JSON in the following format:
-{
-  "modules": [
-    {
-      "id": "module-1",
-      "title": "Module Title",
-      "description": "Module Description",
-      "content": {
-        "lecture": "Lecture content here",
-        "readings": [
-          {
-            "title": "Reading Title",
-            "pages": "1-10"
-          }
-        ],
-        "videos": [
-          {
-            "title": "Video Title",
-            "duration": "10:00"
-          }
-        ]
-      },
-      "quiz": {
-        "questions": [
-          {
-            "question": "Question text",
-            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-            "correct": 0,
-            "explanation": "Explanation for the correct answer"
-          }
-        ]
-      }
-    }
-  ]
-}`
+const CHUNK_SIZE = 2 // Number of modules to generate per chunk
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     
     if (!body.title || !body.moduleCount || !body.courseType) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    console.log('Sending request to OpenAI API with body:', JSON.stringify(body, null, 2))
+    const courseId = `course_${Date.now()}`
+    await kv.set(courseId, { ...body, generatedModules: [], status: 'processing' })
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      temperature: 0.7,
-      max_tokens: 3000,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: `Create ${body.moduleCount} modules for a ${body.courseType} course titled "${body.title}".
-    Target audience: ${body.audience || 'General'}
-    Course description: ${body.description || 'A comprehensive course'}
-    
-    Remember to:
-    1. ONLY return valid JSON
-    2. Include exactly ${body.moduleCount} modules
-    3. Follow the exact format specified in the system prompt
-    4. Ensure each module has unique content
-    5. Make sure all JSON is properly formatted with no trailing commas`
-        }
-      ],
-      response_format: { type: "json_object" }
-    })
+    // Start the background job
+    generateCourseContent(courseId, body)
 
-    console.log('Received response from OpenAI API:', JSON.stringify(completion, null, 2))
-
-    const responseContent = completion.choices[0].message.content
-
-    console.log('Response content:', responseContent)
-
-    try {
-      // First, validate that we have valid JSON
-      const parsedResponse = JSON.parse(responseContent)
-      
-      // Then validate that it has the modules array
-      if (!parsedResponse.modules || !Array.isArray(parsedResponse.modules)) {
-        throw new Error('Invalid response format: missing modules array')
-      }
-
-      // Create the final course object
-      const course = {
-        title: body.title,
-        description: body.description,
-        audience: body.audience,
-        modules: parsedResponse.modules.map((module, index) => ({
-          ...module,
-          id: module.id || `module-${index + 1}`
-        }))
-      }
-
-      return NextResponse.json({ course })
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', responseContent)
-      return NextResponse.json(
-        { 
-          error: 'Invalid course format returned',
-          details: parseError.message,
-          response: responseContent
-        },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ courseId, message: 'Course generation started' })
   } catch (error) {
     console.error('Course generation error:', error)
-    if (error instanceof OpenAI.APIError) {
-      console.error('OpenAI API error:', {
-        message: error.message,
-        type: error.type,
-        code: error.code,
-        param: error.param,
-        status: error.status
-      })
-      return NextResponse.json(
-        { 
-          error: 'OpenAI API error',
-          details: error.message,
-          type: error.type,
-          code: error.code
-        },
-        { status: error.status || 500 }
-      )
-    }
     return NextResponse.json(
-      { 
-        error: 'Failed to generate course',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to start course generation', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
+}
+
+async function generateCourseContent(courseId: string, courseData: any) {
+  const totalChunks = Math.ceil(courseData.moduleCount / CHUNK_SIZE)
+
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const startModule = chunkIndex * CHUNK_SIZE + 1
+    const endModule = Math.min((chunkIndex + 1) * CHUNK_SIZE, courseData.moduleCount)
+
+    try {
+      const modules = await generateModules(courseData, startModule, endModule)
+      
+      const currentCourse = await kv.get(courseId)
+      currentCourse.generatedModules.push(...modules)
+      await kv.set(courseId, currentCourse)
+
+      if (endModule === courseData.moduleCount) {
+        await kv.set(courseId, { ...currentCourse, status: 'completed' })
+      }
+    } catch (error) {
+      console.error(`Error generating modules ${startModule}-${endModule}:`, error)
+      await kv.set(courseId, { ...await kv.get(courseId), status: 'error' })
+      break
+    }
+  }
+}
+
+async function generateModules(courseData: any, startModule: number, endModule: number) {
+  const prompt = `Create modules ${startModule} to ${endModule} for a ${courseData.courseType} course titled "${courseData.title}".
+  Target audience: ${courseData.audience || 'General'}
+  Course description: ${courseData.description || 'A comprehensive course'}`
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    temperature: 0.7,
+    max_tokens: 2000,
+    messages: [
+      {
+        role: "system",
+        content: "You are an expert course creator. Respond with valid JSON for the modules."
+      },
+      { role: "user", content: prompt }
+    ],
+    response_format: { type: "json_object" }
+  })
+
+  return JSON.parse(completion.choices[0].message.content).modules
 }
