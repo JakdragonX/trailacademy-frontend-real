@@ -1,7 +1,19 @@
+'use client';
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { ModuleList } from "./ModuleList"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { StudentModuleView } from "./StudentModuleView"
+import { ModuleEditor } from "./ModuleEditor"
 
 export function CoursePreview({ course, onBack }) {
+  const [selectedModule, setSelectedModule] = useState(null)
+  const [selectedExam, setSelectedExam] = useState(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isEditingModule, setIsEditingModule] = useState(false)
+
   if (!course || !course.modules) {
     return (
       <div className="space-y-6">
@@ -14,11 +26,27 @@ export function CoursePreview({ course, onBack }) {
     )
   }
 
-  const sortedContent = [...course.modules, ...(course.exams || [])].sort((a, b) => {
-    const aIndex = a.id.startsWith("module") ? Number.parseInt(a.id.split("-")[1]) : Number.POSITIVE_INFINITY
-    const bIndex = b.id.startsWith("module") ? Number.parseInt(b.id.split("-")[1]) : Number.POSITIVE_INFINITY
-    return aIndex - bIndex
-  })
+  const handleModuleEdit = (module) => {
+    setSelectedModule(module)
+    setIsEditingModule(true)
+  }
+
+  const handleModuleSave = (updatedModule) => {
+    // Here you would typically update the course data
+    console.log("Updated module:", updatedModule)
+    setIsEditingModule(false)
+  }
+
+  const handlePreview = (item) => {
+    if (item.id.startsWith('module')) {
+      setSelectedModule(item)
+      setSelectedExam(null)
+    } else {
+      setSelectedExam(item)
+      setSelectedModule(null)
+    }
+    setIsPreviewOpen(true)
+  }
 
   return (
     <div className="space-y-6">
@@ -41,21 +69,32 @@ export function CoursePreview({ course, onBack }) {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {sortedContent.map((item, index) => (
-          <Card key={item.id}>
-            <CardContent className="p-6">
-              <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
-              <p className="text-gray-600 mb-4">{item.description}</p>
-              {item.id.startsWith("module") ? (
-                <Button onClick={() => console.log("View module", item.id)}>View Module</Button>
-              ) : (
-                <Button onClick={() => console.log("View exam", item.id)}>View Exam</Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <ModuleList
+        initialModules={course.modules}
+        exams={course.exams}
+        onPreview={handlePreview}
+        onEdit={handleModuleEdit}
+      />
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <StudentModuleView
+            module={selectedModule}
+            exam={selectedExam}
+            onClose={() => setIsPreviewOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditingModule} onOpenChange={setIsEditingModule}>
+        <DialogContent className="max-w-4xl">
+          <ModuleEditor
+            module={selectedModule}
+            onSave={handleModuleSave}
+            onCancel={() => setIsEditingModule(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-between">
         <Button onClick={onBack} variant="outline">
