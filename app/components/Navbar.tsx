@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import BrandLogo from "./BrandLogo"
+import Logo from "./Logo"
 import { LoadingState } from "./LoadingState"
 import { useRouter } from "next/navigation"
 
@@ -28,7 +28,7 @@ export default function Navbar() {
   return (
     <nav className="bg-[#2D4F1E] text-[#FAF6F1] p-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <BrandLogo />
+        <Logo />
         <div className="hidden md:flex space-x-6 items-center">
           <Link href="/courses" className="hover:text-[#FAF6F1]/80 transition">
             Courses
