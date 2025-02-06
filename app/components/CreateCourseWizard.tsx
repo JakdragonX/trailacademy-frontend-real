@@ -11,6 +11,7 @@ import { AlertCircle } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { useRouter } from "next/navigation"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -22,6 +23,7 @@ export function CreateCourseWizard() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const [includeExams, setIncludeExams] = useState(false)
   const [examCount, setExamCount] = useState(1)
+  const router = useRouter()
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -57,6 +59,7 @@ export function CreateCourseWizard() {
 
       setCourseId(data.courseId)
       setGeneratedCourse(data.course)
+      router.push("/courses")
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
@@ -89,10 +92,10 @@ export function CreateCourseWizard() {
         }
 
         if (data.status === "completed") {
-          setStep(3) // Move to course preview after generation
           setIsLoading(false)
           setProgress(null)
           clearInterval(pollInterval)
+          router.push(`/courses/${courseId}`)
         } else if (data.status === "error") {
           throw new Error(data.error || "Course generation failed")
         }
@@ -117,10 +120,10 @@ export function CreateCourseWizard() {
         clearInterval(pollInterval)
       }
     }
-  }, [courseId, isLoading])
+  }, [courseId, isLoading, router])
 
-  if (isLoading) {
-    return <LoadingState task="Generating your course content..." progress={progress} />
+  if (isLoading && courseId) {
+    return <LoadingState task="Generating your course content..." progress={progress} courseId={courseId} />
   }
 
   return (
@@ -170,8 +173,6 @@ export function CreateCourseWizard() {
                 />
               </>
             )}
-
-            {step === 3 && generatedCourse && <CoursePreview course={generatedCourse} onBack={() => setStep(2)} />}
           </div>
         </CardContent>
       </Card>
