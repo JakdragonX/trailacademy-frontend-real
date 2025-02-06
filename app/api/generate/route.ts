@@ -87,6 +87,7 @@ const systemPrompt = `You are an expert course creator. You MUST respond with ON
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    console.log("Received request body:", body)
 
     if (!body.title || !body.moduleCount || !body.courseType) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     }
 
+    console.log("Storing initial course data:", initialCourseData)
     await kv.set(courseId, initialCourseData)
 
     // Start the background job
@@ -120,6 +122,7 @@ export async function POST(request: Request) {
       kv.set(courseId, { ...initialCourseData, status: "error", error: error.message })
     })
 
+    console.log("Course generation started for courseId:", courseId)
     return NextResponse.json({
       courseId,
       message: "Course generation started",
@@ -156,6 +159,7 @@ async function generateCourseContent(courseId: string, courseData: any) {
         modules: allModules,
         exams: allExams,
         currentModule: endModule,
+        totalModules: courseData.moduleCount, // Updated line
         lastUpdated: new Date().toISOString(),
       }
 
@@ -164,8 +168,9 @@ async function generateCourseContent(courseId: string, courseData: any) {
         updatedCourse.status = "completed"
       }
 
+      console.log(`Updating course ${courseId} with modules ${startModule}-${endModule} and exams`)
       await kv.set(courseId, updatedCourse)
-      console.log(`Updated course ${courseId} with modules ${startModule}-${endModule} and exams`)
+      console.log(`Updated course ${courseId}`)
     } catch (error) {
       console.error(`Error generating modules ${startModule}-${endModule}:`, error)
       const currentCourse = await kv.get(courseId)
@@ -211,7 +216,10 @@ ${JSON.stringify(moduleSummaries, null, 2)}
 ${
   courseData.includeExams
     ? `Existing exams:
-${JSON.stringify(examSummaries, null, 2)}`
+${JSON.stringify(examSummaries, null, 2)}
+
+IMPORTANT: The total number of exams should not exceed ${courseData.examCount}. 
+If there are already ${courseData.examCount} exams, do not generate any more.`
     : ""
 }
 
@@ -221,7 +229,9 @@ Remember to:
 3. Create challenging but fair quiz questions
 4. Provide thorough explanations for quiz answers
 5. Ensure new content builds upon and doesn't duplicate existing modules
-${courseData.includeExams ? "6. Create comprehensive exams that cover multiple modules" : ""}`
+${courseData.includeExams ? `6. Create comprehensive exams that cover multiple modules, but do not exceed the total exam count of ${courseData.examCount}` : ""}`
+
+  console.log("Sending prompt to OpenAI:", prompt)
 
   const completion = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
