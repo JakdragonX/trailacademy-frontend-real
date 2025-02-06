@@ -7,19 +7,17 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle, AlertTriangle } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
   const [courseType, setCourseType] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [warning, setWarning] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [generatedCourse, setGeneratedCourse] = useState(null)
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
-    setWarning(null)
     setCourseType(type)
     setStep(2)
   }
@@ -27,7 +25,6 @@ export function CreateCourseWizard() {
   const handleCourseSpecsSubmission = async (specs: any) => {
     setIsLoading(true)
     setError(null)
-    setWarning(null)
 
     try {
       const response = await fetch("/api/courses/generate", {
@@ -43,6 +40,8 @@ export function CreateCourseWizard() {
 
       const data = await response.json()
 
+      console.log("API Response:", data)
+
       if (!response.ok) {
         throw new Error(data.error || data.details || "Failed to generate course")
       }
@@ -52,15 +51,6 @@ export function CreateCourseWizard() {
       }
 
       setGeneratedCourse(data.course)
-
-      // Check if any modules failed to generate
-      const failedModules = data.course.modules.filter(
-        (module) => module.description === "Content generation failed for this module.",
-      )
-      if (failedModules.length > 0) {
-        setWarning(`${failedModules.length} module(s) failed to generate. You may need to edit these manually.`)
-      }
-
       setStep(3)
     } catch (err) {
       console.error("Course generation error:", err)
@@ -84,13 +74,6 @@ export function CreateCourseWizard() {
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {warning && (
-            <Alert variant="warning" className="mb-6">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{warning}</AlertDescription>
             </Alert>
           )}
 
