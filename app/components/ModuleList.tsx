@@ -2,118 +2,93 @@
 
 import { useState } from "react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { Dialog } from "@/components/ui/dialog"
-import { StudentModuleView } from "./StudentModuleView"
-import { ModuleEditor } from "./ModuleEditor"
 import { Card, CardContent } from "@/components/ui/card"
-import { Eye, GripVertical, Edit2 } from "lucide-react"
+import { Eye, GripVertical, Edit2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 
-export function ModuleList({ initialModules, onViewContent }) {
+export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
   const [modules, setModules] = useState(initialModules || [])
-  const [selectedModule, setSelectedModule] = useState(null)
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [editingModule, setEditingModule] = useState(null)
+  const allItems = [...modules, ...(exams || [])]
 
   const handleDragEnd = (result) => {
     if (!result.destination) return
 
-    const items = Array.from(modules)
+    const items = Array.from(allItems)
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    setModules(items)
-  }
-
-  const handlePreview = (module) => {
-    setSelectedModule(module)
-    setIsPreviewOpen(true)
-  }
-
-  const handleEdit = (module) => {
-    setEditingModule(module)
-  }
-
-  const handleSaveEdit = (updatedModule) => {
-    setModules(modules.map((m) => (m.id === updatedModule.id ? updatedModule : m)))
-    setEditingModule(null)
-  }
-
-  if (editingModule) {
-    return <ModuleEditor module={editingModule} onSave={handleSaveEdit} onCancel={() => setEditingModule(null)} />
+    const newModules = items.filter(item => item.id.startsWith('module'))
+    setModules(newModules)
+    // Here you would typically update the course data with the new order
   }
 
   return (
-    <>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="modules">
-          {(provided, snapshot) => (
-            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-              {modules.map((module, index) => (
-                <Draggable key={module.id || index} draggableId={String(module.id || index)} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className={`transition-all ${
-                        snapshot.isDragging ? "shadow-2xl ring-2 ring-[#2D4F1E] bg-white rounded-lg" : ""
-                      }`}
-                    >
-                      <Card className="border-2 border-[#2D4F1E]/10 hover:border-[#2D4F1E]/20 transition-colors">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div
-                                {...provided.dragHandleProps}
-                                className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 rounded"
-                              >
-                                <GripVertical className="h-6 w-6 text-gray-400" />
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-semibold text-[#2D4F1E]">
-                                  {module.title || `Module ${index + 1}`}
-                                </h3>
-                                <p className="text-gray-600 mt-1">
-                                  {module.description || "No description available."}
-                                </p>
-                              </div>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="modules">
+        {(provided) => (
+          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
+            {allItems.map((item, index) => (
+              <Draggable key={item.id} draggableId={item.id} index={index}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    className={`transition-all ${
+                      snapshot.isDragging ? "shadow-2xl ring-2 ring-[#2D4F1E] bg-white rounded-lg" : ""
+                    }`}
+                  >
+                    <Card className="border-2 border-[#2D4F1E]/10 hover:border-[#2D4F1E]/20 transition-colors">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 rounded"
+                            >
+                              <GripVertical className="h-6 w-6 text-gray-400" />
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div>
+                              <h3 className="text-xl font-semibold text-[#2D4F1E]">
+                                {item.title || `${item.id.startsWith('module') ? 'Module' : 'Exam'} ${index + 1}`}
+                              </h3>
+                              <p className="text-gray-600 mt-1">
+                                {item.description || "No description available."}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onPreview(item)}
+                              className="flex items-center gap-2"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Preview
+                            </Button>
+                            {item.id.startsWith('module') && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePreview(module)}
-                                className="flex items-center gap-2"
-                              >
-                                <Eye className="h-4 w-4" />
-                                Preview
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(module)}
+                                onClick={() => onEdit(item)}
                                 className="flex items-center gap-2"
                               >
                                 <Edit2 className="h-4 w-4" />
                                 Edit
                               </Button>
-                            </div>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <StudentModuleView module={selectedModule} onClose={() => setIsPreviewOpen(false)} />
-      </Dialog>
-    </>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   )
 }
