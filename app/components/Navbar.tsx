@@ -3,13 +3,25 @@
 import { useEffect, useState } from 'react';
 import Link from "next/link";
 import Logo from "./Logo";
+import { LoadingState } from "./LoadingState";
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingTask, setLoadingTask] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      router.push('/courses');
+    }
+  }, [isLoading, router]);
 
   if (!isClient) return null;
 
@@ -45,6 +57,14 @@ export default function Navbar() {
             </Link>
           </div>
         </div>
+        {isLoading && (
+          <LoadingState
+            task={loadingTask}
+            progress={loadingProgress}
+            isMinimized={true}
+            onMaximize={() => setIsLoading(false)}
+          />
+        )}
       </div>
     </nav>
   );
