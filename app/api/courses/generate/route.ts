@@ -1,104 +1,94 @@
-import { NextResponse } from "next/server"
-import { kv } from "@vercel/kv"
-import OpenAI from "openai"
+import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 })
 
-export const runtime = "edge"
-
 export async function POST(request: Request) {
-  const startTime = Date.now()
-
   try {
-    console.log("Received request to generate course")
     const body = await request.json()
-    console.log("Request body:", body)
-
-    // Validate required fields
+    
     if (!body.title || !body.moduleCount || !body.courseType) {
-      console.log("Missing required fields")
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
     }
 
-    console.log("Generating course content with OpenAI")
-    // Generate course content using OpenAI with a timeout
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("OpenAI API call timed out")), 8000),
-    )
-    const openAIPromise = openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
+      temperature: 0.7,
+      max_tokens: 2000,
       messages: [
         {
           role: "system",
-          content: "You are an expert course creator.",
+          content: "You are an expert course creator. Respond with valid JSON only."
         },
         {
           role: "user",
-          content: `Create a ${body.courseType} course about: ${body.title}. 
-            Target audience: ${body.audience}.
-            Include ${body.moduleCount} modules.
-            Course description: ${body.description}
-            Additional resources: ${JSON.stringify(body.resources)}
+          content: `Generate content for a course with these specifications:
+            Title: ${body.title}
+            Type: ${body.courseType}
+            Target Audience: ${body.audience || 'General'}
+            Number of Modules: ${body.moduleCount}
+            Description: ${body.description || 'A comprehensive course'}
             
-            Respond with a JSON object containing the following properties:
+            Generate ONLY the modules array in this format:
             {
-              "title": "Course Title",
-              "description": "Course Description",
-              "audience": "Target Audience",
-              "modules": [
-                {
-                  "title": "Module Title",
-                  "description": "Module Description",
-                  "content": {
-                    "lecture": "Module Content",
-                    "readings": [{"title": "Reading Title", "pages": "Page Range"}],
-                    "videos": [{"title": "Video Title", "duration": "Duration"}]
-                  },
-                  "quiz": {
-                    "questions": [
-                      {
-                        "question": "Question Text",
-                        "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-                        "correct": 0,
-                        "explanation": "Explanation for the correct answer"
-                      }
-                    ]
-                  }
+              "modules": [{
+                "id": string (unique identifier),
+                "title": string,
+                "description": string,
+                "content": {
+                  "lecture": string,
+                  "readings": [{"title": string, "pages": string}],
+                  "videos": [{"title": string, "duration": string}]
+                },
+                "quiz": {
+                  "questions": [
+                    {
+                      "question": string,
+                      "options": string[],
+                      "correct": number,
+                      "explanation": string
+                    }
+                  ]
                 }
-              ]
-            }`,
-        },
-      ],
+              }]
+            }`
+        }
+      ]
     })
 
-    const completion = await Promise.race([openAIPromise, timeoutPromise])
-
-    console.log("OpenAI response received")
-
-    let generatedCourse
+    const responseContent = completion.choices[0].message.content
+    
     try {
-      generatedCourse = JSON.parse(completion.choices[0].message.content)
-      console.log("Generated course:", generatedCourse)
+      const { modules } = JSON.parse(responseContent)
+      // Combine AI-generated modules with user-provided course details
+      const course = {
+        title: body.title,
+        description: body.description,
+        audience: body.audience,
+        modules
+      }
+      return NextResponse.json({ course })
     } catch (parseError) {
-      console.error("Error parsing OpenAI response:", parseError)
-      return NextResponse.json({ error: "Failed to parse generated course content" }, { status: 500 })
+      console.error('Failed to parse OpenAI response:', responseContent)
+      return NextResponse.json(
+        { error: 'Invalid course format returned', details: responseContent },
+        { status: 500 }
+      )
     }
-
-    console.log("Saving course to KV store")
-    // Save the generated course to Redis KV store
-    const courseId = `course:${Date.now()}`
-    await kv.set(courseId, JSON.stringify(generatedCourse))
-
-    console.log("Course saved successfully")
-    const endTime = Date.now()
-    console.log(`Total execution time: ${endTime - startTime}ms`)
-    return NextResponse.json({ course: generatedCourse, courseId })
   } catch (error) {
-    console.error("Course generation error:", error)
-    const endTime = Date.now()
-    console.log(`Total execution time: ${endTime - startTime}ms`)
-    return NextResponse.json({ error: "Failed to generate course", details: error.message }, { status: 500 })
+    console.error('Course generation error:', error)
+    return NextResponse.json(
+      { 
+        error: 'Failed to generate course',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
+      { status: 500 }
+    )
   }
 }
