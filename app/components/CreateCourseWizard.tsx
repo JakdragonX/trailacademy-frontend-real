@@ -35,6 +35,7 @@ export function CreateCourseWizard() {
     setProgress({ current: 0, total: specs.moduleCount })
 
     try {
+      console.log("Submitting course specifications:", { ...specs, courseType, includeExams, examCount })
       const response = await fetch("/api/courses/generate", {
         method: "POST",
         headers: {
