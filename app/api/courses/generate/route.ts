@@ -6,17 +6,30 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+export const config = {
+  runtime: "edge",
+}
+
 export async function POST(request: Request) {
+  const startTime = Date.now()
+
   try {
+    console.log("Received request to generate course")
     const body = await request.json()
+    console.log("Request body:", body)
 
     // Validate required fields
     if (!body.title || !body.moduleCount || !body.courseType) {
+      console.log("Missing required fields")
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Generate course content using OpenAI
-    const completion = await openai.chat.completions.create({
+    console.log("Generating course content with OpenAI")
+    // Generate course content using OpenAI with a timeout
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("OpenAI API call timed out")), 8000),
+    )
+    const openAIPromise = openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -62,21 +75,32 @@ export async function POST(request: Request) {
       ],
     })
 
+    const completion = await Promise.race([openAIPromise, timeoutPromise])
+
+    console.log("OpenAI response received")
+
     let generatedCourse
     try {
       generatedCourse = JSON.parse(completion.choices[0].message.content)
+      console.log("Generated course:", generatedCourse)
     } catch (parseError) {
       console.error("Error parsing OpenAI response:", parseError)
       return NextResponse.json({ error: "Failed to parse generated course content" }, { status: 500 })
     }
 
+    console.log("Saving course to KV store")
     // Save the generated course to Redis KV store
     const courseId = `course:${Date.now()}`
     await kv.set(courseId, JSON.stringify(generatedCourse))
 
+    console.log("Course saved successfully")
+    const endTime = Date.now()
+    console.log(`Total execution time: ${endTime - startTime}ms`)
     return NextResponse.json({ course: generatedCourse, courseId })
   } catch (error) {
     console.error("Course generation error:", error)
+    const endTime = Date.now()
+    console.log(`Total execution time: ${endTime - startTime}ms`)
     return NextResponse.json({ error: "Failed to generate course", details: error.message }, { status: 500 })
   }
 }
