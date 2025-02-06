@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 3000,
       messages: [
         {
           role: "system",
@@ -111,6 +111,17 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error("Course generation error:", error)
+    if (error instanceof OpenAI.APIError) {
+      return NextResponse.json(
+        {
+          error: "OpenAI API error",
+          details: error.message,
+          type: error.type,
+          code: error.code,
+        },
+        { status: error.status || 500 },
+      )
+    }
     return NextResponse.json(
       {
         error: "Failed to generate course",
