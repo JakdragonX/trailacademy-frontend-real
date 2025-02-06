@@ -33,7 +33,10 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
 
   if (isMinimized) {
     return (
-      <Button className="fixed bottom-4 right-4 z-50" onClick={() => setIsMinimized(false)}>
+      <Button
+        className="fixed bottom-4 right-4 z-50 bg-white text-[#2D4F1E] border border-[#2D4F1E] hover:bg-[#2D4F1E] hover:text-white transition-colors"
+        onClick={() => setIsMinimized(false)}
+      >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
         <Maximize2 className="h-4 w-4 ml-2" />
