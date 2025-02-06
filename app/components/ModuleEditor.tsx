@@ -299,7 +299,7 @@ export function ModuleEditor({
                         </div>
                       ))}
                       <Textarea
-                        placeholder="Explanation"
+                        placeholder="Explanation for the correct answer"
                         value={question.explanation}
                         onChange={(e) => updateQuestion(index, "explanation", e.target.value)}
                       />
