@@ -18,7 +18,7 @@ export function CourseSpecificationForm({ onSubmit, onBack }) {
     title: "",
     description: "",
     audience: "",
-    moduleCount: 5,
+    moduleCount: 8, // Changed from 5 to 8
     resources: [] as Resource[],
   })
 
@@ -83,7 +83,7 @@ export function CourseSpecificationForm({ onSubmit, onBack }) {
         <Input
           type="number"
           value={formData.moduleCount}
-          onChange={(e) => setFormData({ ...formData, moduleCount: Number.parseInt(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, moduleCount: Math.max(1, Number.parseInt(e.target.value) || 1) })}
           min={1}
           max={20}
           required
