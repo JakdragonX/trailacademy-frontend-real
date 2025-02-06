@@ -138,65 +138,58 @@ export function CreateCourseWizard() {
   }, [courseId, isLoading, router])
 
   return (
-    <>
-      <div className="min-h-screen bg-[#FAF6F1] py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-          <CardContent className="p-6 sm:p-10">
-            <h2 className="text-3xl font-bold text-[#2D4F1E] mb-6">Create a New Course</h2>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#FAF6F1] py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+        <CardContent className="p-6 sm:p-10">
+          <h2 className="text-3xl font-bold text-[#2D4F1E] mb-6">Create a New Course</h2>
 
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-            {!isLoading && (
-              <div className="space-y-8">
-                {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
+          {!isLoading && (
+            <div className="space-y-8">
+              {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
 
-                {step === 2 && (
-                  <>
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
-                      <Label htmlFor="include-exams" className="text-sm font-medium text-gray-700">
-                        Include Exams
-                      </Label>
+              {step === 2 && (
+                <>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
+                    <Label htmlFor="include-exams" className="text-sm font-medium text-gray-700">
+                      Include Exams
+                    </Label>
+                  </div>
+                  {includeExams && (
+                    <div className="mb-4">
+                      <Label htmlFor="exam-count">Number of Exams</Label>
+                      <Input
+                        id="exam-count"
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={examCount}
+                        onChange={(e) => setExamCount(Number.parseInt(e.target.value))}
+                      />
                     </div>
-                    {includeExams && (
-                      <div className="mb-4">
-                        <Label htmlFor="exam-count">Number of Exams</Label>
-                        <Input
-                          id="exam-count"
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={examCount}
-                          onChange={(e) => setExamCount(Number.parseInt(e.target.value))}
-                        />
-                      </div>
-                    )}
-                    <CourseSpecificationForm
-                      onSubmit={handleCourseSpecsSubmission}
-                      onBack={() => setStep(1)}
-                      includeExams={includeExams}
-                      examCount={examCount}
-                    />
-                  </>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  )}
+                  <CourseSpecificationForm
+                    onSubmit={handleCourseSpecsSubmission}
+                    onBack={() => setStep(1)}
+                    includeExams={includeExams}
+                    examCount={examCount}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       {isLoading && courseId && (
-        <LoadingState
-          task="Generating your course content..."
-          progress={progress}
-          courseId={courseId}
-          debugInfo={debugInfo}
-        />
+        <LoadingState task="Generating your course content..." progress={progress} courseId={courseId} />
       )}
-    </>
+    </div>
   )
 }
