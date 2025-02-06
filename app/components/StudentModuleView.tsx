@@ -25,7 +25,7 @@ export function StudentModuleView({ module, exam, onClose }) {
 
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="content" className="h-full" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-4 bg-[#FAF6F1]">
             <TabsTrigger value="content" className="data-[state=active]:bg-[#2D4F1E] data-[state=active]:text-white">
               Content
             </TabsTrigger>
@@ -54,7 +54,7 @@ export function StudentModuleView({ module, exam, onClose }) {
 
           <ScrollArea className="h-[calc(90vh-12rem)] mt-4">
             <TabsContent value="content" className="p-4">
-              <Card className="border-2 border-[#2D4F1E]/10">
+              <Card className="border-2 border-[#2D4F1E]">
                 <CardContent className="prose max-w-none p-6">
                   <h3 className="text-xl font-semibold text-[#2D4F1E] mb-4">
                     {module ? "Lecture Content" : "Exam Instructions"}
@@ -71,10 +71,7 @@ export function StudentModuleView({ module, exam, onClose }) {
                 <TabsContent value="readings" className="p-4">
                   <div className="grid gap-4">
                     {module.content.readings.map((reading, index) => (
-                      <Card
-                        key={index}
-                        className="border-2 border-[#2D4F1E]/10 hover:border-[#2D4F1E]/20 transition-colors"
-                      >
+                      <Card key={index} className="border-2 border-[#2D4F1E] hover:border-[#4A7A30] transition-colors">
                         <CardContent className="flex items-start gap-4 p-4">
                           <div className="p-2 bg-[#2D4F1E]/5 rounded-lg">
                             <Book className="h-5 w-5 text-[#2D4F1E]" />
@@ -85,7 +82,7 @@ export function StudentModuleView({ module, exam, onClose }) {
                             {reading.content && (
                               <details className="mt-2">
                                 <summary className="cursor-pointer text-sm text-[#2D4F1E]">View Content</summary>
-                                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">{reading.content}</div>
+                                <div className="mt-2 p-2 bg-[#FAF6F1] rounded text-sm">{reading.content}</div>
                               </details>
                             )}
                           </div>
@@ -98,10 +95,7 @@ export function StudentModuleView({ module, exam, onClose }) {
                 <TabsContent value="videos" className="p-4">
                   <div className="grid gap-4">
                     {module.content.videos.map((video, index) => (
-                      <Card
-                        key={index}
-                        className="border-2 border-[#2D4F1E]/10 hover:border-[#2D4F1E]/20 transition-colors"
-                      >
+                      <Card key={index} className="border-2 border-[#2D4F1E] hover:border-[#4A7A30] transition-colors">
                         <CardContent className="flex items-start gap-4 p-4">
                           <div className="p-2 bg-[#2D4F1E]/5 rounded-lg">
                             <Video className="h-5 w-5 text-[#2D4F1E]" />
@@ -144,7 +138,7 @@ export function StudentModuleView({ module, exam, onClose }) {
               <TabsContent value="exam" className="p-4">
                 <div className="space-y-6">
                   {exam.questions.map((question, index) => (
-                    <Card key={index} className="border-2 border-[#2D4F1E]/10">
+                    <Card key={index} className="border-2 border-[#2D4F1E]">
                       <CardContent className="p-6">
                         <h4 className="text-lg font-semibold text-[#2D4F1E] mb-2">Question {index + 1}</h4>
                         <p className="mb-4">{question.question}</p>
@@ -173,7 +167,7 @@ export function StudentModuleView({ module, exam, onClose }) {
                       </CardContent>
                     </Card>
                   ))}
-                  <Button className="w-full">Submit Exam</Button>
+                  <Button className="w-full bg-[#2D4F1E] text-white hover:bg-[#4A7A30]">Submit Exam</Button>
                 </div>
               </TabsContent>
             )}
@@ -182,7 +176,7 @@ export function StudentModuleView({ module, exam, onClose }) {
       </div>
 
       <div className="border-t pt-4 mt-auto">
-        <Button onClick={onClose} variant="outline" className="w-full">
+        <Button onClick={onClose} variant="outline" className="w-full border-[#2D4F1E] text-[#2D4F1E]">
           Close Preview
         </Button>
       </div>
