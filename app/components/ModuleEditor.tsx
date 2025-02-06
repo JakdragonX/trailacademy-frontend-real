@@ -30,7 +30,11 @@ interface QuizOption {
 
 interface Question {
   question: string
-  options: QuizOption[]
+  options: Array<{
+    text: string
+    isCorrect: boolean
+    explanation: string
+  }>
 }
 
 interface ModuleContent {
