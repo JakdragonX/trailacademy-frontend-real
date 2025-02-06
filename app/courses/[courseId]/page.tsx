@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { CoursePreview } from "@/components/CoursePreview"
-import { LoadingState } from "@/components/LoadingState"
+import { CoursePreview } from "../../components/CoursePreview"
+import { LoadingState } from "../../components/LoadingState"
 
 export default function CoursePage() {
   const { courseId } = useParams()
