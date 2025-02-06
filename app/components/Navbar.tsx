@@ -5,11 +5,14 @@ import Link from "next/link"
 import Logo from "./Logo"
 import { LoadingState } from "./LoadingState"
 import { useRouter } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
+import { Button } from "@/components/ui/button"
 
 export default function Navbar() {
   const [isClient, setIsClient] = useState(false)
   const [loadingState, setLoadingState] = useState(null)
   const router = useRouter()
+  const { data: session } = useSession()
 
   useEffect(() => {
     setIsClient(true)
@@ -55,20 +58,34 @@ export default function Navbar() {
           <Link href="/community" className="hover:text-[#FAF6F1]/80 transition">
             Community
           </Link>
-          <div className="flex items-center space-x-2">
-            <Link
-              href="/login"
-              className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
-            >
-              Sign Up
-            </Link>
-          </div>
+          {session ? (
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard" className="hover:text-[#FAF6F1]/80 transition">
+                Dashboard
+              </Link>
+              <Button
+                onClick={() => signOut()}
+                className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
+              >
+                Log Out
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Link
+                href="/login"
+                className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
         {loadingState && (
           <LoadingState
