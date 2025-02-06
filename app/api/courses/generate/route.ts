@@ -5,41 +5,84 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const systemPrompt = `You are an expert course creator. You MUST respond with ONLY valid JSON in the following format:
-{
-  "modules": [
-    {
-      "id": "module-1",
-      "title": "Module Title",
-      "description": "Module Description",
-      "content": {
-        "lecture": "Lecture content here",
-        "readings": [
-          {
-            "title": "Reading Title",
-            "pages": "1-10"
-          }
-        ],
-        "videos": [
-          {
-            "title": "Video Title",
-            "duration": "10:00"
-          }
-        ]
+const generateModuleContent = async (
+  moduleNumber: number,
+  courseTitle: string,
+  courseType: string,
+  audience: string,
+) => {
+  const prompt = `Create content for module ${moduleNumber} of a ${courseType} course titled "${courseTitle}" for ${audience} audience. Respond with plain text for each section.
+
+Title:
+Description:
+Lecture:
+Reading 1 Title:
+Reading 1 Pages:
+Video 1 Title:
+Video 1 Duration:
+Quiz Question:
+Quiz Option 1:
+Quiz Option 2:
+Quiz Option 3:
+Quiz Option 4:
+Correct Answer (1-4):
+Quiz Explanation:
+`
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    temperature: 0.7,
+    max_tokens: 1000,
+    messages: [
+      {
+        role: "system",
+        content: "You are an expert course creator. Provide concise, relevant content for each section.",
       },
-      "quiz": {
-        "questions": [
-          {
-            "question": "Question text",
-            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-            "correct": 0,
-            "explanation": "Explanation for the correct answer"
-          }
-        ]
-      }
-    }
-  ]
-}`
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+  })
+
+  const content = completion.choices[0].message.content.split("\n")
+
+  return {
+    id: `module-${moduleNumber}`,
+    title: content[1].replace("Title:", "").trim(),
+    description: content[2].replace("Description:", "").trim(),
+    content: {
+      lecture: content[3].replace("Lecture:", "").trim(),
+      readings: [
+        {
+          title: content[4].replace("Reading 1 Title:", "").trim(),
+          pages: content[5].replace("Reading 1 Pages:", "").trim(),
+        },
+      ],
+      videos: [
+        {
+          title: content[6].replace("Video 1 Title:", "").trim(),
+          duration: content[7].replace("Video 1 Duration:", "").trim(),
+        },
+      ],
+    },
+    quiz: {
+      questions: [
+        {
+          question: content[8].replace("Quiz Question:", "").trim(),
+          options: [
+            content[9].replace("Quiz Option 1:", "").trim(),
+            content[10].replace("Quiz Option 2:", "").trim(),
+            content[11].replace("Quiz Option 3:", "").trim(),
+            content[12].replace("Quiz Option 4:", "").trim(),
+          ],
+          correct: Number.parseInt(content[13].replace("Correct Answer (1-4):", "").trim()) - 1,
+          explanation: content[14].replace("Quiz Explanation:", "").trim(),
+        },
+      ],
+    },
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -49,79 +92,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      temperature: 0.7,
-      max_tokens: 3000,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `Create ${body.moduleCount} modules for a ${body.courseType} course titled "${body.title}".
-    Target audience: ${body.audience || "General"}
-    Course description: ${body.description || "A comprehensive course"}
-    
-    Remember to:
-    1. ONLY return valid JSON
-    2. Include exactly ${body.moduleCount} modules
-    3. Follow the exact format specified in the system prompt
-    4. Ensure each module has unique content
-    5. Make sure all JSON is properly formatted with no trailing commas`,
-        },
-      ],
-      response_format: { type: "json_object" },
-    })
-
-    const responseContent = completion.choices[0].message.content
-
-    try {
-      // First, validate that we have valid JSON
-      const parsedResponse = JSON.parse(responseContent)
-
-      // Then validate that it has the modules array
-      if (!parsedResponse.modules || !Array.isArray(parsedResponse.modules)) {
-        throw new Error("Invalid response format: missing modules array")
+    const modules = []
+    for (let i = 1; i <= body.moduleCount; i++) {
+      try {
+        const module = await generateModuleContent(i, body.title, body.courseType, body.audience)
+        modules.push(module)
+      } catch (moduleError) {
+        console.error(`Error generating module ${i}:`, moduleError)
+        // If a module fails, we'll add a placeholder instead of failing the entire course
+        modules.push({
+          id: `module-${i}`,
+          title: `Module ${i}`,
+          description: "Content generation failed for this module.",
+          content: {
+            lecture: "Lecture content unavailable.",
+            readings: [],
+            videos: [],
+          },
+          quiz: {
+            questions: [],
+          },
+        })
       }
-
-      // Create the final course object
-      const course = {
-        title: body.title,
-        description: body.description,
-        audience: body.audience,
-        modules: parsedResponse.modules.map((module, index) => ({
-          ...module,
-          id: module.id || `module-${index + 1}`,
-        })),
-      }
-
-      return NextResponse.json({ course })
-    } catch (parseError) {
-      console.error("Failed to parse OpenAI response:", responseContent)
-      return NextResponse.json(
-        {
-          error: "Invalid course format returned",
-          details: parseError.message,
-          response: responseContent,
-        },
-        { status: 500 },
-      )
     }
+
+    const course = {
+      title: body.title,
+      description: body.description,
+      audience: body.audience,
+      modules: modules,
+    }
+
+    return NextResponse.json({ course })
   } catch (error) {
     console.error("Course generation error:", error)
-    if (error instanceof OpenAI.APIError) {
-      return NextResponse.json(
-        {
-          error: "OpenAI API error",
-          details: error.message,
-          type: error.type,
-          code: error.code,
-        },
-        { status: error.status || 500 },
-      )
-    }
     return NextResponse.json(
       {
         error: "Failed to generate course",
@@ -131,3 +135,4 @@ export async function POST(request: Request) {
     )
   }
 }
+
