@@ -7,7 +7,7 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle } from "lucide-react"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -40,12 +40,15 @@ export function CreateCourseWizard() {
       })
 
       const data = await response.json()
+      console.log("Generate API response:", data)
 
       if (!response.ok) {
         throw new Error(data.error || data.details || "Failed to start course generation")
       }
 
       setCourseId(data.courseId)
+      // Set initial course data
+      setGeneratedCourse(data.course)
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
@@ -54,33 +57,50 @@ export function CreateCourseWizard() {
   }
 
   useEffect(() => {
+    let pollInterval: NodeJS.Timeout
+
     const pollCourseStatus = async () => {
       if (!courseId) return
 
       try {
         const response = await fetch(`/api/courses/status?courseId=${courseId}`)
         const data = await response.json()
+        console.log("Status API response:", data)
 
-        if (data.status === 'completed') {
-          setGeneratedCourse(data)
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch course status")
+        }
+
+        setGeneratedCourse(data)
+
+        if (data.status === "completed") {
           setStep(3)
           setIsLoading(false)
-        } else if (data.status === 'error') {
-          throw new Error("Course generation failed")
-        } else {
-          setTimeout(pollCourseStatus, 5000) // Poll every 5 seconds
+          clearInterval(pollInterval)
+        } else if (data.status === "error") {
+          throw new Error(data.error || "Course generation failed")
         }
       } catch (err) {
         console.error("Error polling course status:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
         setIsLoading(false)
+        clearInterval(pollInterval)
       }
     }
 
-    if (courseId) {
+    if (courseId && isLoading) {
+      // Poll every 5 seconds
+      pollInterval = setInterval(pollCourseStatus, 5000)
+      // Initial poll
       pollCourseStatus()
     }
-  }, [courseId])
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
+    }
+  }, [courseId, isLoading])
 
   if (isLoading) {
     return <LoadingState task="Generating your course content..." />
