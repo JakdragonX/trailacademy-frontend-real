@@ -1,28 +1,6 @@
-let userConfig = undefined
-try {
-  userConfig = await import('./v0-user-next.config')
-} catch (e) {
-  // ignore error
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  async redirects() {
-    return [
-      {
-        source: "/courses",
-        destination: "/",
-        permanent: true,
-      },
-    ]
-  },
-}
-
-module.exports = nextConfig
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -37,28 +15,44 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/courses",
+        destination: "/",
+        permanent: true,
+      },
+    ]
+  },
 }
 
-mergeConfig(nextConfig, userConfig)
+let userConfig = undefined
+try {
+  userConfig = await import("./v0-user-next.config")
+} catch (e) {
+  // ignore error
+}
 
-function mergeConfig(nextConfig, userConfig) {
+function mergeConfig(baseConfig, userConfig) {
   if (!userConfig) {
-    return
+    return baseConfig
   }
 
+  const merged = { ...baseConfig }
   for (const key in userConfig) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
+    if (typeof baseConfig[key] === "object" && !Array.isArray(baseConfig[key])) {
+      merged[key] = {
+        ...baseConfig[key],
         ...userConfig[key],
       }
     } else {
-      nextConfig[key] = userConfig[key]
+      merged[key] = userConfig[key]
     }
   }
+  return merged
 }
 
-export default nextConfig
+const finalConfig = mergeConfig(nextConfig, userConfig)
+
+export default finalConfig
+
