@@ -8,22 +8,29 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Trash2, Save } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 interface Reading {
   title: string
   pages: string
+  content: string
 }
 
 interface Video {
   title: string
   duration: string
+  url: string
+}
+
+interface QuizOption {
+  text: string
+  isCorrect: boolean
+  explanation: string
 }
 
 interface Question {
   question: string
-  options: string[]
-  correct: number
-  explanation: string
+  options: QuizOption[]
 }
 
 interface ModuleContent {
@@ -55,7 +62,7 @@ export function ModuleEditor({
       ...editedModule,
       content: {
         ...editedModule.content,
-        readings: [...editedModule.content.readings, { title: "", pages: "" }],
+        readings: [...editedModule.content.readings, { title: "", pages: "", content: "" }],
       },
     })
   }
@@ -87,7 +94,7 @@ export function ModuleEditor({
       ...editedModule,
       content: {
         ...editedModule.content,
-        videos: [...editedModule.content.videos, { title: "", duration: "" }],
+        videos: [...editedModule.content.videos, { title: "", duration: "", url: "" }],
       },
     })
   }
@@ -122,9 +129,12 @@ export function ModuleEditor({
           ...editedModule.quiz.questions,
           {
             question: "",
-            options: ["", "", "", ""],
-            correct: 0,
-            explanation: "",
+            options: [
+              { text: "", isCorrect: false, explanation: "" },
+              { text: "", isCorrect: false, explanation: "" },
+              { text: "", isCorrect: false, explanation: "" },
+              { text: "", isCorrect: false, explanation: "" },
+            ],
           },
         ],
       },
@@ -132,18 +142,26 @@ export function ModuleEditor({
   }
 
   const updateQuestion = (
-    index: number,
+    questionIndex: number,
     field: keyof Question | "option",
-    value: string | number,
+    value: string | boolean,
     optionIndex?: number,
   ) => {
     const newQuestions = [...editedModule.quiz.questions]
     if (field === "option" && typeof optionIndex === "number") {
-      const newOptions = [...newQuestions[index].options]
-      newOptions[optionIndex] = value as string
-      newQuestions[index] = { ...newQuestions[index], options: newOptions }
+      const newOptions = [...newQuestions[questionIndex].options]
+      newOptions[optionIndex] = { ...newOptions[optionIndex], text: value as string }
+      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
+    } else if (field === "isCorrect" && typeof optionIndex === "number") {
+      const newOptions = [...newQuestions[questionIndex].options]
+      newOptions[optionIndex] = { ...newOptions[optionIndex], isCorrect: value as boolean }
+      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
+    } else if (field === "explanation" && typeof optionIndex === "number") {
+      const newOptions = [...newQuestions[questionIndex].options]
+      newOptions[optionIndex] = { ...newOptions[optionIndex], explanation: value as string }
+      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
     } else {
-      newQuestions[index] = { ...newQuestions[index], [field]: value }
+      newQuestions[questionIndex] = { ...newQuestions[questionIndex], [field]: value }
     }
     setEditedModule({
       ...editedModule,
@@ -217,23 +235,34 @@ export function ModuleEditor({
           <Card>
             <CardContent className="p-4 space-y-4">
               {editedModule.content.readings.map((reading, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Reading Title"
-                      value={reading.title}
-                      onChange={(e) => updateReading(index, "title", e.target.value)}
-                    />
-                    <Input
-                      placeholder="Pages (e.g., 1-10)"
-                      value={reading.pages}
-                      onChange={(e) => updateReading(index, "pages", e.target.value)}
-                    />
-                  </div>
-                  <Button variant="destructive" size="icon" onClick={() => removeReading(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Accordion key={index} type="single" collapsible className="w-full">
+                  <AccordionItem value={`reading-${index}`}>
+                    <AccordionTrigger className="text-left">{reading.title || `Reading ${index + 1}`}</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Reading Title"
+                          value={reading.title}
+                          onChange={(e) => updateReading(index, "title", e.target.value)}
+                        />
+                        <Input
+                          placeholder="Pages (e.g., 1-10)"
+                          value={reading.pages}
+                          onChange={(e) => updateReading(index, "pages", e.target.value)}
+                        />
+                        <Textarea
+                          placeholder="Reading content or notes"
+                          value={reading.content}
+                          onChange={(e) => updateReading(index, "content", e.target.value)}
+                          rows={5}
+                        />
+                        <Button variant="destructive" size="sm" onClick={() => removeReading(index)}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Remove Reading
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ))}
               <Button onClick={addReading} className="w-full">
                 <Plus className="h-4 w-4 mr-2" /> Add Reading
@@ -246,21 +275,24 @@ export function ModuleEditor({
           <Card>
             <CardContent className="p-4 space-y-4">
               {editedModule.content.videos.map((video, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Video Title"
-                      value={video.title}
-                      onChange={(e) => updateVideo(index, "title", e.target.value)}
-                    />
-                    <Input
-                      placeholder="Duration (e.g., 10:00)"
-                      value={video.duration}
-                      onChange={(e) => updateVideo(index, "duration", e.target.value)}
-                    />
-                  </div>
-                  <Button variant="destructive" size="icon" onClick={() => removeVideo(index)}>
-                    <Trash2 className="h-4 w-4" />
+                <div key={index} className="space-y-2 p-4 border rounded">
+                  <Input
+                    placeholder="Video Title"
+                    value={video.title}
+                    onChange={(e) => updateVideo(index, "title", e.target.value)}
+                  />
+                  <Input
+                    placeholder="Duration (e.g., 10:00)"
+                    value={video.duration}
+                    onChange={(e) => updateVideo(index, "duration", e.target.value)}
+                  />
+                  <Input
+                    placeholder="Video URL"
+                    value={video.url}
+                    onChange={(e) => updateVideo(index, "url", e.target.value)}
+                  />
+                  <Button variant="destructive" size="sm" onClick={() => removeVideo(index)}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remove Video
                   </Button>
                 </div>
               ))}
@@ -274,40 +306,35 @@ export function ModuleEditor({
         <TabsContent value="quiz" className="mt-4">
           <Card>
             <CardContent className="p-4 space-y-6">
-              {editedModule.quiz.questions.map((question, index) => (
-                <div key={index} className="space-y-4 p-4 border rounded-lg">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Input
-                        placeholder="Question"
-                        value={question.question}
-                        onChange={(e) => updateQuestion(index, "question", e.target.value)}
+              {editedModule.quiz.questions.map((question, questionIndex) => (
+                <div key={questionIndex} className="space-y-4 p-4 border rounded-lg">
+                  <Input
+                    placeholder="Question"
+                    value={question.question}
+                    onChange={(e) => updateQuestion(questionIndex, "question", e.target.value)}
+                  />
+                  {question.options.map((option, optionIndex) => (
+                    <div key={optionIndex} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={option.isCorrect}
+                        onChange={(e) => updateQuestion(questionIndex, "isCorrect", e.target.checked, optionIndex)}
                       />
-                      {question.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name={`correct-${index}`}
-                            checked={question.correct === optionIndex}
-                            onChange={() => updateQuestion(index, "correct", optionIndex)}
-                          />
-                          <Input
-                            placeholder={`Option ${optionIndex + 1}`}
-                            value={option}
-                            onChange={(e) => updateQuestion(index, "option", e.target.value, optionIndex)}
-                          />
-                        </div>
-                      ))}
+                      <Input
+                        placeholder={`Option ${optionIndex + 1}`}
+                        value={option.text}
+                        onChange={(e) => updateQuestion(questionIndex, "option", e.target.value, optionIndex)}
+                      />
                       <Textarea
-                        placeholder="Explanation for the correct answer"
-                        value={question.explanation}
-                        onChange={(e) => updateQuestion(index, "explanation", e.target.value)}
+                        placeholder="Explanation for this option"
+                        value={option.explanation}
+                        onChange={(e) => updateQuestion(questionIndex, "explanation", e.target.value, optionIndex)}
                       />
                     </div>
-                    <Button variant="destructive" size="icon" onClick={() => removeQuestion(index)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  ))}
+                  <Button variant="destructive" size="sm" onClick={() => removeQuestion(questionIndex)}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Remove Question
+                  </Button>
                 </div>
               ))}
               <Button onClick={addQuestion} className="w-full">
