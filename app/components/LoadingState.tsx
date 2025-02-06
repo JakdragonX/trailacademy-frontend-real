@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Minimize2, Maximize2 } from "lucide-react"
+import { Loader2, Minimize2, Maximize2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import Link from 'next/link'
 
 interface LoadingStateProps {
   task: string
@@ -11,9 +12,10 @@ interface LoadingStateProps {
     total: number
   }
   courseId: string
+  debugInfo?: string
 }
 
-export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
+export function LoadingState({ task, progress, courseId, debugInfo }: LoadingStateProps) {
   const [isMinimized, setIsMinimized] = useState(false)
 
   useEffect(() => {
@@ -39,6 +41,9 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
       >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
+        <Link href={`/courses/${courseId}`} className="ml-2 underline">
+          View Course
+        </Link>
         <Maximize2 className="h-4 w-4 ml-2" />
       </Button>
     )
@@ -64,6 +69,14 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
               <p className="text-sm text-gray-600 text-center">
                 Generating module {progress.current} of {progress.total}
               </p>
+              <Link href={`/courses/${courseId}`} className="text-[#2D4F1E] hover:underline mt-2">
+                View Course Progress
+              </Link>
+            </div>
+          )}
+          {debugInfo && (
+            <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600 max-h-32 overflow-y-auto">
+              <pre>{debugInfo}</pre>
             </div>
           )}
         </div>
