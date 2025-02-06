@@ -1,32 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Trash2, Save } from "lucide-react"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-
-interface Reading {
-  title: string
-  pages: string
-  content: string
-}
-
-interface Video {
-  title: string
-  duration: string
-  url: string
-}
-
-interface QuizOption {
-  text: string
-  isCorrect: boolean
-  explanation: string
-}
+import { Plus, Minus, RefreshCw } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Question {
   question: string
@@ -37,325 +18,308 @@ interface Question {
   }>
 }
 
-interface ModuleContent {
+interface Module {
+  id: string
   title: string
   description: string
   content: {
     lecture: string
-    readings: Reading[]
-    videos: Video[]
+    readings: Array<{
+      title: string
+      pages: string
+      content: string
+    }>
+    videos: Array<{
+      title: string
+      duration: string
+      url: string
+    }>
   }
   quiz: {
     questions: Question[]
   }
 }
 
-export function ModuleEditor({
-  module,
-  onSave,
-  onCancel,
-}: {
-  module: ModuleContent
-  onSave: (module: ModuleContent) => void
+interface ModuleEditorProps {
+  module: Module
+  onSave: (updatedModule: Module) => void
   onCancel: () => void
-}) {
-  const [editedModule, setEditedModule] = useState<ModuleContent>(module)
+}
 
-  const addReading = () => {
+export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
+  const [editedModule, setEditedModule] = useState<Module>(module)
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false)
+  const [aiPrompt, setAIPrompt] = useState("")
+
+  const handleInputChange = (field: string, value: string) => {
+    setEditedModule({ ...editedModule, [field]: value })
+  }
+
+  const handleContentChange = (field: string, value: string) => {
     setEditedModule({
       ...editedModule,
-      content: {
-        ...editedModule.content,
-        readings: [...editedModule.content.readings, { title: "", pages: "", content: "" }],
-      },
+      content: { ...editedModule.content, [field]: value },
     })
   }
 
-  const updateReading = (index: number, field: keyof Reading, value: string) => {
-    const newReadings = [...editedModule.content.readings]
-    newReadings[index] = { ...newReadings[index], [field]: value }
+  const handleReadingChange = (index: number, field: string, value: string) => {
+    const updatedReadings = [...editedModule.content.readings]
+    updatedReadings[index] = { ...updatedReadings[index], [field]: value }
     setEditedModule({
       ...editedModule,
-      content: {
-        ...editedModule.content,
-        readings: newReadings,
-      },
+      content: { ...editedModule.content, readings: updatedReadings },
     })
   }
 
-  const removeReading = (index: number) => {
+  const handleVideoChange = (index: number, field: string, value: string) => {
+    const updatedVideos = [...editedModule.content.videos]
+    updatedVideos[index] = { ...updatedVideos[index], [field]: value }
     setEditedModule({
       ...editedModule,
-      content: {
-        ...editedModule.content,
-        readings: editedModule.content.readings.filter((_, i) => i !== index),
-      },
+      content: { ...editedModule.content, videos: updatedVideos },
     })
   }
 
-  const addVideo = () => {
+  const handleQuestionChange = (index: number, field: string, value: string) => {
+    const updatedQuestions = [...editedModule.quiz.questions]
+    updatedQuestions[index] = { ...updatedQuestions[index], [field]: value }
     setEditedModule({
       ...editedModule,
-      content: {
-        ...editedModule.content,
-        videos: [...editedModule.content.videos, { title: "", duration: "", url: "" }],
-      },
+      quiz: { ...editedModule.quiz, questions: updatedQuestions },
     })
   }
 
-  const updateVideo = (index: number, field: keyof Video, value: string) => {
-    const newVideos = [...editedModule.content.videos]
-    newVideos[index] = { ...newVideos[index], [field]: value }
+  const handleOptionChange = (questionIndex: number, optionIndex: number, field: string, value: string | boolean) => {
+    const updatedQuestions = [...editedModule.quiz.questions]
+    updatedQuestions[questionIndex].options[optionIndex] = {
+      ...updatedQuestions[questionIndex].options[optionIndex],
+      [field]: value,
+    }
     setEditedModule({
       ...editedModule,
-      content: {
-        ...editedModule.content,
-        videos: newVideos,
-      },
-    })
-  }
-
-  const removeVideo = (index: number) => {
-    setEditedModule({
-      ...editedModule,
-      content: {
-        ...editedModule.content,
-        videos: editedModule.content.videos.filter((_, i) => i !== index),
-      },
+      quiz: { ...editedModule.quiz, questions: updatedQuestions },
     })
   }
 
   const addQuestion = () => {
-    setEditedModule({
-      ...editedModule,
-      quiz: {
-        questions: [
-          ...editedModule.quiz.questions,
-          {
-            question: "",
-            options: [
-              { text: "", isCorrect: false, explanation: "" },
-              { text: "", isCorrect: false, explanation: "" },
-              { text: "", isCorrect: false, explanation: "" },
-              { text: "", isCorrect: false, explanation: "" },
-            ],
-          },
-        ],
-      },
-    })
-  }
-
-  const updateQuestion = (
-    questionIndex: number,
-    field: keyof Question | "option",
-    value: string | boolean,
-    optionIndex?: number,
-  ) => {
-    const newQuestions = [...editedModule.quiz.questions]
-    if (field === "option" && typeof optionIndex === "number") {
-      const newOptions = [...newQuestions[questionIndex].options]
-      newOptions[optionIndex] = { ...newOptions[optionIndex], text: value as string }
-      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
-    } else if (field === "isCorrect" && typeof optionIndex === "number") {
-      const newOptions = [...newQuestions[questionIndex].options]
-      newOptions[optionIndex] = { ...newOptions[optionIndex], isCorrect: value as boolean }
-      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
-    } else if (field === "explanation" && typeof optionIndex === "number") {
-      const newOptions = [...newQuestions[questionIndex].options]
-      newOptions[optionIndex] = { ...newOptions[optionIndex], explanation: value as string }
-      newQuestions[questionIndex] = { ...newQuestions[questionIndex], options: newOptions }
-    } else {
-      newQuestions[questionIndex] = { ...newQuestions[questionIndex], [field]: value }
+    const newQuestion: Question = {
+      question: "",
+      options: [
+        { text: "", isCorrect: false, explanation: "" },
+        { text: "", isCorrect: false, explanation: "" },
+      ],
     }
     setEditedModule({
       ...editedModule,
-      quiz: {
-        questions: newQuestions,
-      },
+      quiz: { ...editedModule.quiz, questions: [...editedModule.quiz.questions, newQuestion] },
     })
   }
 
   const removeQuestion = (index: number) => {
+    const updatedQuestions = [...editedModule.quiz.questions]
+    updatedQuestions.splice(index, 1)
     setEditedModule({
       ...editedModule,
-      quiz: {
-        questions: editedModule.quiz.questions.filter((_, i) => i !== index),
-      },
+      quiz: { ...editedModule.quiz, questions: updatedQuestions },
     })
   }
 
+  const addOption = (questionIndex: number) => {
+    const updatedQuestions = [...editedModule.quiz.questions]
+    updatedQuestions[questionIndex].options.push({ text: "", isCorrect: false, explanation: "" })
+    setEditedModule({
+      ...editedModule,
+      quiz: { ...editedModule.quiz, questions: updatedQuestions },
+    })
+  }
+
+  const removeOption = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...editedModule.quiz.questions]
+    updatedQuestions[questionIndex].options.splice(optionIndex, 1)
+    setEditedModule({
+      ...editedModule,
+      quiz: { ...editedModule.quiz, questions: updatedQuestions },
+    })
+  }
+
+  const handleAIPrompt = async () => {
+    // TODO: Implement AI content generation
+    console.log("AI Prompt:", aiPrompt)
+    // Here you would make an API call to generate content based on the prompt
+    // Then update the editedModule with the generated content
+    setIsAIDialogOpen(false)
+  }
+
   return (
-    <div className="space-y-6 p-6 bg-white rounded-lg shadow-lg max-w-4xl mx-auto">
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="title">Module Title</Label>
-          <Input
-            id="title"
-            value={editedModule.title}
-            onChange={(e) => setEditedModule({ ...editedModule, title: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Module Description</Label>
-          <Textarea
-            id="description"
-            value={editedModule.description}
-            onChange={(e) => setEditedModule({ ...editedModule, description: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-      </div>
+    <div className="space-y-6">
+      <Input
+        value={editedModule.title}
+        onChange={(e) => handleInputChange("title", e.target.value)}
+        placeholder="Module Title"
+      />
+      <Textarea
+        value={editedModule.description}
+        onChange={(e) => handleInputChange("description", e.target.value)}
+        placeholder="Module Description"
+      />
 
-      <Tabs defaultValue="content" className="mt-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="readings">Readings</TabsTrigger>
-          <TabsTrigger value="videos">Videos</TabsTrigger>
-          <TabsTrigger value="quiz">Quiz</TabsTrigger>
-        </TabsList>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="lecture">
+          <AccordionTrigger>Lecture Content</AccordionTrigger>
+          <AccordionContent>
+            <Textarea
+              value={editedModule.content.lecture}
+              onChange={(e) => handleContentChange("lecture", e.target.value)}
+              placeholder="Lecture content"
+              rows={10}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-        <TabsContent value="content" className="mt-4">
-          <Card>
-            <CardContent className="p-4">
-              <Label htmlFor="lecture">Lecture Content</Label>
-              <Textarea
-                id="lecture"
-                value={editedModule.content.lecture}
-                onChange={(e) =>
-                  setEditedModule({
-                    ...editedModule,
-                    content: { ...editedModule.content, lecture: e.target.value },
-                  })
-                }
-                className="mt-1"
-                rows={10}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <AccordionItem value="readings">
+          <AccordionTrigger>Readings</AccordionTrigger>
+          <AccordionContent>
+            {editedModule.content.readings.map((reading, index) => (
+              <Card key={index} className="mb-4">
+                <CardContent className="pt-6">
+                  <Input
+                    value={reading.title}
+                    onChange={(e) => handleReadingChange(index, "title", e.target.value)}
+                    placeholder="Reading Title"
+                    className="mb-2"
+                  />
+                  <Input
+                    value={reading.pages}
+                    onChange={(e) => handleReadingChange(index, "pages", e.target.value)}
+                    placeholder="Pages"
+                    className="mb-2"
+                  />
+                  <Textarea
+                    value={reading.content}
+                    onChange={(e) => handleReadingChange(index, "content", e.target.value)}
+                    placeholder="Reading content"
+                    rows={5}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+            <Button onClick={() => setEditedModule({ ...editedModule, content: { ...editedModule.content, readings: [...editedModule.content.readings, { title: "", pages: "", content: "" }] } })}>
+              Add Reading
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
 
-        <TabsContent value="readings" className="mt-4">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              {editedModule.content.readings.map((reading, index) => (
-                <Accordion key={index} type="single" collapsible className="w-full">
-                  <AccordionItem value={`reading-${index}`}>
-                    <AccordionTrigger className="text-left">{reading.title || `Reading ${index + 1}`}</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2">
+        <AccordionItem value="videos">
+          <AccordionTrigger>Videos</AccordionTrigger>
+          <AccordionContent>
+            {editedModule.content.videos.map((video, index) => (
+              <Card key={index} className="mb-4">
+                <CardContent className="pt-6">
+                  <Input
+                    value={video.title}
+                    onChange={(e) => handleVideoChange(index, "title", e.target.value)}
+                    placeholder="Video Title"
+                    className="mb-2"
+                  />
+                  <Input
+                    value={video.duration}
+                    onChange={(e) => handleVideoChange(index, "duration", e.target.value)}
+                    placeholder="Duration"
+                    className="mb-2"
+                  />
+                  <Input
+                    value={video.url}
+                    onChange={(e) => handleVideoChange(index, "url", e.target.value)}
+                    placeholder="Video URL"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+            <Button onClick={() => setEditedModule({ ...editedModule, content: { ...editedModule.content, videos: [...editedModule.content.videos, { title: "", duration: "", url: "" }] } })}>
+              Add Video
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="quiz">
+          <AccordionTrigger>Quiz</AccordionTrigger>
+          <AccordionContent>
+            {editedModule.quiz.questions.map((question, qIndex) => (
+              <Card key={qIndex} className="mb-4">
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-lg font-semibold">Question {qIndex + 1}</h4>
+                    <Button variant="destructive" size="sm" onClick={() => removeQuestion(qIndex)}>
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={question.question}
+                    onChange={(e) => handleQuestionChange(qIndex, "question", e.target.value)}
+                    placeholder="Question"
+                    className="mb-2"
+                  />
+                  {question.options.map((option, oIndex) => (
+                    <div key={oIndex} className="mb-2">
+                      <div className="flex items-center gap-2">
                         <Input
-                          placeholder="Reading Title"
-                          value={reading.title}
-                          onChange={(e) => updateReading(index, "title", e.target.value)}
+                          value={option.text}
+                          onChange={(e) => handleOptionChange(qIndex, oIndex, "text", e.target.value)}
+                          placeholder={`Option ${oIndex + 1}`}
                         />
-                        <Input
-                          placeholder="Pages (e.g., 1-10)"
-                          value={reading.pages}
-                          onChange={(e) => updateReading(index, "pages", e.target.value)}
+                        <input
+                          type="checkbox"
+                          checked={option.isCorrect}
+                          onChange={(e) => handleOptionChange(qIndex, oIndex, "isCorrect", e.target.checked)}
                         />
-                        <Textarea
-                          placeholder="Reading content or notes"
-                          value={reading.content}
-                          onChange={(e) => updateReading(index, "content", e.target.value)}
-                          rows={5}
-                        />
-                        <Button variant="destructive" size="sm" onClick={() => removeReading(index)}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Remove Reading
+                        <Button variant="destructive" size="sm" onClick={() => removeOption(qIndex, oIndex)}>
+                          <Minus className="h-4 w-4" />
                         </Button>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              ))}
-              <Button onClick={addReading} className="w-full">
-                <Plus className="h-4 w-4 mr-2" /> Add Reading
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="videos" className="mt-4">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              {editedModule.content.videos.map((video, index) => (
-                <div key={index} className="space-y-2 p-4 border rounded">
-                  <Input
-                    placeholder="Video Title"
-                    value={video.title}
-                    onChange={(e) => updateVideo(index, "title", e.target.value)}
-                  />
-                  <Input
-                    placeholder="Duration (e.g., 10:00)"
-                    value={video.duration}
-                    onChange={(e) => updateVideo(index, "duration", e.target.value)}
-                  />
-                  <Input
-                    placeholder="Video URL"
-                    value={video.url}
-                    onChange={(e) => updateVideo(index, "url", e.target.value)}
-                  />
-                  <Button variant="destructive" size="sm" onClick={() => removeVideo(index)}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Remove Video
-                  </Button>
-                </div>
-              ))}
-              <Button onClick={addVideo} className="w-full">
-                <Plus className="h-4 w-4 mr-2" /> Add Video
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="quiz" className="mt-4">
-          <Card>
-            <CardContent className="p-4 space-y-6">
-              {editedModule.quiz.questions.map((question, questionIndex) => (
-                <div key={questionIndex} className="space-y-4 p-4 border rounded-lg">
-                  <Input
-                    placeholder="Question"
-                    value={question.question}
-                    onChange={(e) => updateQuestion(questionIndex, "question", e.target.value)}
-                  />
-                  {question.options.map((option, optionIndex) => (
-                    <div key={optionIndex} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={option.isCorrect}
-                        onChange={(e) => updateQuestion(questionIndex, "isCorrect", e.target.checked, optionIndex)}
-                      />
-                      <Input
-                        placeholder={`Option ${optionIndex + 1}`}
-                        value={option.text}
-                        onChange={(e) => updateQuestion(questionIndex, "option", e.target.value, optionIndex)}
-                      />
                       <Textarea
-                        placeholder="Explanation for this option"
                         value={option.explanation}
-                        onChange={(e) => updateQuestion(questionIndex, "explanation", e.target.value, optionIndex)}
+                        onChange={(e) => handleOptionChange(qIndex, oIndex, "explanation", e.target.value)}
+                        placeholder="Explanation"
+                        className="mt-1"
                       />
                     </div>
                   ))}
-                  <Button variant="destructive" size="sm" onClick={() => removeQuestion(questionIndex)}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Remove Question
-                  </Button>
-                </div>
-              ))}
-              <Button onClick={addQuestion} className="w-full">
-                <Plus className="h-4 w-4 mr-2" /> Add Question
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <Button onClick={() => addOption(qIndex)}>Add Option</Button>
+                </CardContent>
+              </Card>
+            ))}
+            <Button onClick={addQuestion}>Add Question</Button>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-      <div className="flex justify-end gap-4 mt-6">
-        <Button variant="outline" onClick={onCancel}>
+      <div className="flex justify-between">
+        <Button onClick={onCancel} variant="outline">
           Cancel
         </Button>
-        <Button onClick={() => onSave(editedModule)}>
-          <Save className="h-4 w-4 mr-2" /> Save Changes
-        </Button>
+        <div className="space-x-2">
+          <Dialog open={isAIDialogOpen} onOpenChange={setIsAIDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                AI Assist
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>AI Content Generation</DialogTitle>
+              </DialogHeader>
+              <Textarea
+                value={aiPrompt}
+                onChange={(e) => setAIPrompt(e.target.value)}
+                placeholder="Enter your prompt for AI content generation"
+                rows={5}
+              />
+              <Button onClick={handleAIPrompt}>Generate Content</Button>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={() => onSave(editedModule)}>Save Changes</Button>
+        </div>
       </div>
     </div>
   )
