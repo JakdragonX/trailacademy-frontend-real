@@ -7,7 +7,7 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -142,8 +142,12 @@ export function CreateCourseWizard() {
             {step === 2 && (
               <>
                 <div className="flex items-center space-x-2 mb-4">
-                  <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
-                  <Label htmlFor="include-exams">Include Exams</Label>
+                  <Switch
+                    id="include-exams"
+                    checked={includeExams}
+                    onCheckedChange={setIncludeExams}
+                  />
+                  <Label htmlFor="include-exams" className="text-sm font-medium text-gray-700">Include Exams</Label>
                 </div>
                 {includeExams && (
                   <div className="mb-4">
