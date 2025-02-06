@@ -8,20 +8,33 @@ import { useRouter } from "next/navigation"
 
 export default function Navbar() {
   const [isClient, setIsClient] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [loadingTask, setLoadingTask] = useState("")
-  const [loadingProgress, setLoadingProgress] = useState(null)
+  const [loadingState, setLoadingState] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
     setIsClient(true)
-  }, [])
 
-  useEffect(() => {
-    if (isLoading) {
-      router.push("/courses")
+    const checkLoadingState = () => {
+      const keys = Object.keys(localStorage)
+      const loadingStateKey = keys.find((key) => key.startsWith("loadingState_"))
+      if (loadingStateKey) {
+        const state = JSON.parse(localStorage.getItem(loadingStateKey))
+        setLoadingState({
+          courseId: loadingStateKey.split("_")[1],
+          ...state,
+        })
+      } else {
+        setLoadingState(null)
+      }
     }
-  }, [isLoading, router])
+
+    checkLoadingState()
+    window.addEventListener("storage", checkLoadingState)
+
+    return () => {
+      window.removeEventListener("storage", checkLoadingState)
+    }
+  }, [])
 
   if (!isClient) return null
 
@@ -57,12 +70,11 @@ export default function Navbar() {
             </Link>
           </div>
         </div>
-        {isLoading && (
+        {loadingState && (
           <LoadingState
-            task={loadingTask}
-            progress={loadingProgress}
-            isMinimized={true}
-            onMaximize={() => setIsLoading(false)}
+            task="Generating your course content..."
+            progress={loadingState.progress}
+            courseId={loadingState.courseId}
           />
         )}
       </div>
