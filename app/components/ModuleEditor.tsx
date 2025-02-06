@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Plus, Minus, RefreshCw } from 'lucide-react'
+import { Minus, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Question {
@@ -143,7 +143,7 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
   }
 
   const handleAIPrompt = async () => {
-    // TODO: Implement AI content generation
+    // Implement AI content generation here
     console.log("AI Prompt:", aiPrompt)
     // Here you would make an API call to generate content based on the prompt
     // Then update the editedModule with the generated content
@@ -203,7 +203,17 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
                 </CardContent>
               </Card>
             ))}
-            <Button onClick={() => setEditedModule({ ...editedModule, content: { ...editedModule.content, readings: [...editedModule.content.readings, { title: "", pages: "", content: "" }] } })}>
+            <Button
+              onClick={() =>
+                setEditedModule({
+                  ...editedModule,
+                  content: {
+                    ...editedModule.content,
+                    readings: [...editedModule.content.readings, { title: "", pages: "", content: "" }],
+                  },
+                })
+              }
+            >
               Add Reading
             </Button>
           </AccordionContent>
@@ -235,7 +245,17 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
                 </CardContent>
               </Card>
             ))}
-            <Button onClick={() => setEditedModule({ ...editedModule, content: { ...editedModule.content, videos: [...editedModule.content.videos, { title: "", duration: "", url: "" }] } })}>
+            <Button
+              onClick={() =>
+                setEditedModule({
+                  ...editedModule,
+                  content: {
+                    ...editedModule.content,
+                    videos: [...editedModule.content.videos, { title: "", duration: "", url: "" }],
+                  },
+                })
+              }
+            >
               Add Video
             </Button>
           </AccordionContent>
