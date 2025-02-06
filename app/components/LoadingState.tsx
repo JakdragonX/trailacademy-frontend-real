@@ -10,26 +10,32 @@ interface LoadingStateProps {
     current: number
     total: number
   }
-  isMinimized?: boolean
-  onMinimize?: () => void
-  onMaximize?: () => void
+  courseId: string
 }
 
-export function LoadingState({ task, progress, isMinimized, onMinimize, onMaximize }: LoadingStateProps) {
-  const [localIsMinimized, setLocalIsMinimized] = useState(isMinimized || false);
+export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
+  const [isMinimized, setIsMinimized] = useState(false)
 
   useEffect(() => {
-    setLocalIsMinimized(isMinimized || false);
-  }, [isMinimized]);
+    const storedState = localStorage.getItem(`loadingState_${courseId}`)
+    if (storedState) {
+      const { isMinimized: storedIsMinimized, progress: storedProgress } = JSON.parse(storedState)
+      setIsMinimized(storedIsMinimized)
+      if (storedProgress) {
+        progress = storedProgress
+      }
+    }
+  }, [courseId, progress]); // Added progress to dependencies
 
-  if (localIsMinimized) {
+  useEffect(() => {
+    localStorage.setItem(`loadingState_${courseId}`, JSON.stringify({ isMinimized, progress }))
+  }, [isMinimized, progress, courseId])
+
+  if (isMinimized) {
     return (
       <Button
-        className="fixed top-4 right-4 z-50"
-        onClick={() => {
-          setLocalIsMinimized(false);
-          onMaximize && onMaximize();
-        }}
+        className="fixed top-16 right-4 z-50"
+        onClick={() => setIsMinimized(false)}
       >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
@@ -45,10 +51,7 @@ export function LoadingState({ task, progress, isMinimized, onMinimize, onMaximi
           className="absolute top-2 right-2"
           variant="ghost"
           size="sm"
-          onClick={() => {
-            setLocalIsMinimized(true);
-            onMinimize && onMinimize();
-          }}
+          onClick={() => setIsMinimized(true)}
         >
           <Minimize2 className="h-4 w-4" />
         </Button>
