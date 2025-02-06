@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Minimize2, Maximize2 } from 'lucide-react'
+import { Loader2, Minimize2, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from 'next/link'
 
 interface LoadingStateProps {
   task: string
@@ -12,45 +11,39 @@ interface LoadingStateProps {
     total: number
   }
   courseId: string
-  debugInfo?: string
 }
 
-export function LoadingState({ task, progress, courseId, debugInfo }: LoadingStateProps) {
+export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
   const [isMinimized, setIsMinimized] = useState(false)
 
   useEffect(() => {
-    const storedState = localStorage.getItem(`loadingState_${courseId}`)
+    // Get minimized state from localStorage using a global key
+    const storedState = localStorage.getItem("loadingStateMinimized")
     if (storedState) {
-      const { isMinimized: storedIsMinimized, progress: storedProgress } = JSON.parse(storedState)
-      setIsMinimized(storedIsMinimized)
-      if (storedProgress) {
-        progress = storedProgress
-      }
+      setIsMinimized(JSON.parse(storedState))
     }
-  }, [courseId, progress])
+  }, [])
 
   useEffect(() => {
-    localStorage.setItem(`loadingState_${courseId}`, JSON.stringify({ isMinimized, progress }))
-  }, [isMinimized, progress, courseId])
+    // Store minimized state globally
+    localStorage.setItem("loadingStateMinimized", JSON.stringify(isMinimized))
+  }, [isMinimized])
 
   if (isMinimized) {
     return (
       <Button
-        className="fixed bottom-4 right-4 z-50 bg-[#2D4F1E] text-white border border-white hover:bg-[#4A7A30] transition-colors"
+        className="fixed bottom-4 right-4 z-40 bg-[#2D4F1E] text-white border border-white hover:bg-[#4A7A30] transition-colors"
         onClick={() => setIsMinimized(false)}
       >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
-        <Link href={`/courses/${courseId}`} className="ml-2 underline">
-          View Course
-        </Link>
         <Maximize2 className="h-4 w-4 ml-2" />
       </Button>
     )
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full space-y-4 relative">
         <Button className="absolute top-2 right-2" variant="ghost" size="sm" onClick={() => setIsMinimized(true)}>
           <Minimize2 className="h-4 w-4" />
@@ -69,14 +62,6 @@ export function LoadingState({ task, progress, courseId, debugInfo }: LoadingSta
               <p className="text-sm text-gray-600 text-center">
                 Generating module {progress.current} of {progress.total}
               </p>
-              <Link href={`/courses/${courseId}`} className="text-[#2D4F1E] hover:underline mt-2">
-                View Course Progress
-              </Link>
-            </div>
-          )}
-          {debugInfo && (
-            <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600 max-h-32 overflow-y-auto">
-              <pre>{debugInfo}</pre>
             </div>
           )}
         </div>
