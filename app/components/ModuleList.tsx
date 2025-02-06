@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Eye, GripVertical, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
+export function ModuleList({ initialModules, exams, onPreview, onEdit, onReorder }) {
   const [modules, setModules] = useState(initialModules || [])
   const allItems = [...modules, ...(exams || [])]
 
@@ -19,7 +19,7 @@ export function ModuleList({ initialModules, exams, onPreview, onEdit }) {
 
     const newModules = items.filter((item) => item.id.startsWith("module"))
     setModules(newModules)
-    // Here you would typically update the course data with the new order
+    onReorder(newModules)
   }
 
   return (
