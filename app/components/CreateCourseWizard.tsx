@@ -6,7 +6,6 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { createCourse } from "@/lib/courseService"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -23,8 +22,18 @@ export function CreateCourseWizard() {
   const handleCourseSpecsSubmission = async (specs) => {
     setIsLoading(true)
     try {
-      const course = await createCourse({ ...specs, courseType })
-      setGeneratedCourse(course)
+      const response = await fetch("/api/courses/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...specs, courseType }),
+      })
+      if (!response.ok) {
+        throw new Error("Failed to generate course")
+      }
+      const data = await response.json()
+      setGeneratedCourse(data.course)
       setStep(3)
     } catch (error) {
       console.error("Course generation error:", error)
@@ -60,4 +69,3 @@ export function CreateCourseWizard() {
     </Card>
   )
 }
-
