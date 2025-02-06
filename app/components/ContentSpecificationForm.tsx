@@ -152,4 +152,3 @@ export function CourseSpecificationForm({ onSubmit, onBack }) {
     </form>
   )
 }
-
