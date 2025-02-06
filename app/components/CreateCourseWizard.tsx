@@ -7,8 +7,10 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
-import { ExamEditor } from "./ExamEditor"
 import { AlertCircle } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -18,7 +20,8 @@ export function CreateCourseWizard() {
   const [generatedCourse, setGeneratedCourse] = useState<any>(null)
   const [courseId, setCourseId] = useState<string | null>(null)
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
-  const [exam, setExam] = useState<any>(null)
+  const [includeExams, setIncludeExams] = useState(false)
+  const [examCount, setExamCount] = useState(1)
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -40,6 +43,8 @@ export function CreateCourseWizard() {
         body: JSON.stringify({
           ...specs,
           courseType,
+          includeExams,
+          examCount,
         }),
       })
 
@@ -58,11 +63,6 @@ export function CreateCourseWizard() {
       setIsLoading(false)
       setProgress(null)
     }
-  }
-
-  const handleExamCreation = (createdExam: any) => {
-    setExam(createdExam)
-    setStep(4) // Move to course preview after exam creation
   }
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export function CreateCourseWizard() {
         }
 
         if (data.status === "completed") {
-          setStep(3) // Move to exam creation after course generation
+          setStep(3) // Move to course preview after generation
           setIsLoading(false)
           setProgress(null)
           clearInterval(pollInterval)
@@ -139,30 +139,35 @@ export function CreateCourseWizard() {
           <div className="space-y-8">
             {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
 
-            {step === 2 && <CourseSpecificationForm onSubmit={handleCourseSpecsSubmission} onBack={() => setStep(1)} />}
-
-            {step === 3 && (
-              <ExamEditor
-                exam={{
-                  title: "",
-                  description: "",
-                  questions: [],
-                  totalPoints: 0,
-                }}
-                onSave={handleExamCreation}
-                onCancel={() => setStep(2)}
-              />
+            {step === 2 && (
+              <>
+                <div className="flex items-center space-x-2 mb-4">
+                  <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
+                  <Label htmlFor="include-exams">Include Exams</Label>
+                </div>
+                {includeExams && (
+                  <div className="mb-4">
+                    <Label htmlFor="exam-count">Number of Exams</Label>
+                    <Input
+                      id="exam-count"
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={examCount}
+                      onChange={(e) => setExamCount(Number.parseInt(e.target.value))}
+                    />
+                  </div>
+                )}
+                <CourseSpecificationForm
+                  onSubmit={handleCourseSpecsSubmission}
+                  onBack={() => setStep(1)}
+                  includeExams={includeExams}
+                  examCount={examCount}
+                />
+              </>
             )}
 
-            {step === 4 && generatedCourse && (
-              <CoursePreview
-                course={{
-                  ...generatedCourse,
-                  exam: exam,
-                }}
-                onBack={() => setStep(3)}
-              />
-            )}
+            {step === 3 && generatedCourse && <CoursePreview course={generatedCourse} onBack={() => setStep(2)} />}
           </div>
         </CardContent>
       </Card>

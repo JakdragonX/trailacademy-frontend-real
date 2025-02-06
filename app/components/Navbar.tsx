@@ -1,22 +1,34 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import Link from "next/link";
-import Logo from "./Logo";
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import BrandLogo from "./BrandLogo"
+import { LoadingState } from "./LoadingState"
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadingTask, setLoadingTask] = useState("")
+  const [loadingProgress, setLoadingProgress] = useState(null)
+  const router = useRouter()
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    setIsClient(true)
+  }, [])
 
-  if (!isClient) return null;
+  useEffect(() => {
+    if (isLoading) {
+      router.push("/courses")
+    }
+  }, [isLoading, router])
+
+  if (!isClient) return null
 
   return (
     <nav className="bg-[#2D4F1E] text-[#FAF6F1] p-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <Logo />
+        <BrandLogo />
         <div className="hidden md:flex space-x-6 items-center">
           <Link href="/courses" className="hover:text-[#FAF6F1]/80 transition">
             Courses
@@ -45,7 +57,15 @@ export default function Navbar() {
             </Link>
           </div>
         </div>
+        {isLoading && (
+          <LoadingState
+            task={loadingTask}
+            progress={loadingProgress}
+            isMinimized={true}
+            onMaximize={() => setIsLoading(false)}
+          />
+        )}
       </div>
     </nav>
-  );
+  )
 }

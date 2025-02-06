@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Loader2, Minimize2, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -10,14 +10,27 @@ interface LoadingStateProps {
     current: number
     total: number
   }
+  isMinimized?: boolean
+  onMinimize?: () => void
+  onMaximize?: () => void
 }
 
-export function LoadingState({ task, progress }: LoadingStateProps) {
-  const [isMinimized, setIsMinimized] = useState(false)
+export function LoadingState({ task, progress, isMinimized, onMinimize, onMaximize }: LoadingStateProps) {
+  const [localIsMinimized, setLocalIsMinimized] = useState(isMinimized || false)
 
-  if (isMinimized) {
+  useEffect(() => {
+    setLocalIsMinimized(isMinimized || false)
+  }, [isMinimized])
+
+  if (localIsMinimized) {
     return (
-      <Button className="fixed bottom-4 right-4 z-50" onClick={() => setIsMinimized(false)}>
+      <Button
+        className="fixed bottom-4 right-4 z-50"
+        onClick={() => {
+          setLocalIsMinimized(false)
+          onMaximize && onMaximize()
+        }}
+      >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
         <Maximize2 className="h-4 w-4 ml-2" />
@@ -28,7 +41,15 @@ export function LoadingState({ task, progress }: LoadingStateProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full space-y-4 relative">
-        <Button className="absolute top-2 right-2" variant="ghost" size="sm" onClick={() => setIsMinimized(true)}>
+        <Button
+          className="absolute top-2 right-2"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setLocalIsMinimized(true)
+            onMinimize && onMinimize()
+          }}
+        >
           <Minimize2 className="h-4 w-4" />
         </Button>
         <div className="flex flex-col items-center justify-center space-y-4">
