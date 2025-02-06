@@ -7,6 +7,7 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
+import { ExamEditor } from "./ExamEditor"
 import { AlertCircle } from "lucide-react"
 
 export function CreateCourseWizard() {
@@ -17,6 +18,7 @@ export function CreateCourseWizard() {
   const [generatedCourse, setGeneratedCourse] = useState<any>(null)
   const [courseId, setCourseId] = useState<string | null>(null)
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
+  const [exam, setExam] = useState<any>(null)
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -58,6 +60,11 @@ export function CreateCourseWizard() {
     }
   }
 
+  const handleExamCreation = (createdExam: any) => {
+    setExam(createdExam)
+    setStep(4) // Move to course preview after exam creation
+  }
+
   useEffect(() => {
     let pollInterval: NodeJS.Timeout
 
@@ -82,7 +89,7 @@ export function CreateCourseWizard() {
         }
 
         if (data.status === "completed") {
-          setStep(3)
+          setStep(3) // Move to exam creation after course generation
           setIsLoading(false)
           setProgress(null)
           clearInterval(pollInterval)
@@ -134,11 +141,31 @@ export function CreateCourseWizard() {
 
             {step === 2 && <CourseSpecificationForm onSubmit={handleCourseSpecsSubmission} onBack={() => setStep(1)} />}
 
-            {step === 3 && generatedCourse && <CoursePreview course={generatedCourse} onBack={() => setStep(2)} />}
+            {step === 3 && (
+              <ExamEditor
+                exam={{
+                  title: "",
+                  description: "",
+                  questions: [],
+                  totalPoints: 0,
+                }}
+                onSave={handleExamCreation}
+                onCancel={() => setStep(2)}
+              />
+            )}
+
+            {step === 4 && generatedCourse && (
+              <CoursePreview
+                course={{
+                  ...generatedCourse,
+                  exam: exam,
+                }}
+                onBack={() => setStep(3)}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
   )
 }
-
