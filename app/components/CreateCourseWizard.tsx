@@ -16,6 +16,7 @@ export function CreateCourseWizard() {
   const [isLoading, setIsLoading] = useState(false)
   const [generatedCourse, setGeneratedCourse] = useState<any>(null)
   const [courseId, setCourseId] = useState<string | null>(null)
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -26,6 +27,7 @@ export function CreateCourseWizard() {
   const handleCourseSpecsSubmission = async (specs: any) => {
     setIsLoading(true)
     setError(null)
+    setProgress({ current: 0, total: specs.moduleCount })
 
     try {
       const response = await fetch("/api/courses/generate", {
@@ -47,12 +49,12 @@ export function CreateCourseWizard() {
       }
 
       setCourseId(data.courseId)
-      // Set initial course data
       setGeneratedCourse(data.course)
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
       setIsLoading(false)
+      setProgress(null)
     }
   }
 
@@ -72,10 +74,17 @@ export function CreateCourseWizard() {
         }
 
         setGeneratedCourse(data)
+        if (data.currentModule && data.totalModules) {
+          setProgress({
+            current: data.currentModule,
+            total: data.totalModules,
+          })
+        }
 
         if (data.status === "completed") {
           setStep(3)
           setIsLoading(false)
+          setProgress(null)
           clearInterval(pollInterval)
         } else if (data.status === "error") {
           throw new Error(data.error || "Course generation failed")
@@ -84,13 +93,14 @@ export function CreateCourseWizard() {
         console.error("Error polling course status:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
         setIsLoading(false)
+        setProgress(null)
         clearInterval(pollInterval)
       }
     }
 
     if (courseId && isLoading) {
-      // Poll every 5 seconds
-      pollInterval = setInterval(pollCourseStatus, 5000)
+      // Poll every 3 seconds
+      pollInterval = setInterval(pollCourseStatus, 3000)
       // Initial poll
       pollCourseStatus()
     }
@@ -103,7 +113,7 @@ export function CreateCourseWizard() {
   }, [courseId, isLoading])
 
   if (isLoading) {
-    return <LoadingState task="Generating your course content..." />
+    return <LoadingState task="Generating your course content..." progress={progress} />
   }
 
   return (
