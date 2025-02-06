@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Minimize2, Maximize2 } from 'lucide-react'
+import { Loader2, Minimize2, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface LoadingStateProps {
@@ -25,7 +25,7 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
         progress = storedProgress
       }
     }
-  }, [courseId, progress]); // Added progress to dependencies
+  }, [courseId, progress])
 
   useEffect(() => {
     localStorage.setItem(`loadingState_${courseId}`, JSON.stringify({ isMinimized, progress }))
@@ -33,10 +33,7 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
 
   if (isMinimized) {
     return (
-      <Button
-        className="fixed top-16 right-4 z-50"
-        onClick={() => setIsMinimized(false)}
-      >
+      <Button className="fixed bottom-4 right-4 z-50" onClick={() => setIsMinimized(false)}>
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         {progress ? `${progress.current}/${progress.total}` : "Loading"}
         <Maximize2 className="h-4 w-4 ml-2" />
@@ -47,12 +44,7 @@ export function LoadingState({ task, progress, courseId }: LoadingStateProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full space-y-4 relative">
-        <Button
-          className="absolute top-2 right-2"
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsMinimized(true)}
-        >
+        <Button className="absolute top-2 right-2" variant="ghost" size="sm" onClick={() => setIsMinimized(true)}>
           <Minimize2 className="h-4 w-4" />
         </Button>
         <div className="flex flex-col items-center justify-center space-y-4">
