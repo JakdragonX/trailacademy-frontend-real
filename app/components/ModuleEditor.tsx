@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Minus, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ExamEditor } from "./ExamEditor"
 
 interface Question {
   question: string
@@ -38,6 +39,11 @@ interface Module {
   quiz: {
     questions: Question[]
   }
+  exam?: {
+    title: string
+    description: string
+    questions: any[]
+  }
 }
 
 interface ModuleEditorProps {
@@ -50,6 +56,7 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
   const [editedModule, setEditedModule] = useState<Module>(module)
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false)
   const [aiPrompt, setAIPrompt] = useState("")
+  const [isExamEditorOpen, setIsExamEditorOpen] = useState(false)
 
   const handleInputChange = (field: string, value: string) => {
     setEditedModule({ ...editedModule, [field]: value })
@@ -148,6 +155,14 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
     // Here you would make an API call to generate content based on the prompt
     // Then update the editedModule with the generated content
     setIsAIDialogOpen(false)
+  }
+
+  const handleExamSave = (updatedExam) => {
+    setEditedModule({
+      ...editedModule,
+      exam: updatedExam,
+    })
+    setIsExamEditorOpen(false)
   }
 
   return (
@@ -311,6 +326,13 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
             <Button onClick={addQuestion}>Add Question</Button>
           </AccordionContent>
         </AccordionItem>
+
+        <AccordionItem value="exam">
+          <AccordionTrigger>Exam</AccordionTrigger>
+          <AccordionContent>
+            <Button onClick={() => setIsExamEditorOpen(true)}>{editedModule.exam ? "Edit Exam" : "Add Exam"}</Button>
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
 
       <div className="flex justify-between">
@@ -341,6 +363,16 @@ export function ModuleEditor({ module, onSave, onCancel }: ModuleEditorProps) {
           <Button onClick={() => onSave(editedModule)}>Save Changes</Button>
         </div>
       </div>
+
+      <Dialog open={isExamEditorOpen} onOpenChange={setIsExamEditorOpen}>
+        <DialogContent className="max-w-4xl">
+          <ExamEditor
+            exam={editedModule.exam || { title: "", description: "", questions: [] }}
+            onSave={handleExamSave}
+            onCancel={() => setIsExamEditorOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
