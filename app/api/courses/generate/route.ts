@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
-import { generateCourse } from "@/lib/aiService"
-import { saveCourse } from "@/lib/courseService"
+import { kv } from "@vercel/kv"
+import OpenAI from "openai"
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
 export async function POST(request: Request) {
   try {
@@ -11,22 +15,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const course = await generateCourse({
-      title: body.title,
-      description: body.description,
-      audience: body.audience,
-      moduleCount: body.moduleCount,
-      resources: body.resources,
-      courseType: body.courseType,
+    // Generate course content using OpenAI
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert course creator.",
+        },
+        {
+          role: "user",
+          content: `Create a ${body.courseType} course about: ${body.title}. 
+            Target audience: ${body.audience}.
+            Include ${body.moduleCount} modules.
+            Course description: ${body.description}
+            Additional resources: ${JSON.stringify(body.resources)}`,
+        },
+      ],
     })
 
-    // Save the generated course
-    const savedCourse = await saveCourse(course)
+    const generatedCourse = JSON.parse(completion.choices[0].message.content)
 
-    return NextResponse.json({ course: savedCourse })
+    // Save the generated course to Redis KV store
+    const courseId = `course:${Date.now()}`
+    await kv.set(courseId, JSON.stringify(generatedCourse))
+
+    return NextResponse.json({ course: generatedCourse, courseId })
   } catch (error) {
     console.error("Course generation error:", error)
     return NextResponse.json({ error: "Failed to generate course" }, { status: 500 })
   }
 }
-
