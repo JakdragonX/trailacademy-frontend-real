@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -21,10 +22,9 @@ export function CreateCourseWizard() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const [includeExams, setIncludeExams] = useState(false)
   const [examCount, setExamCount] = useState(1)
-  const [debugInfo, setDebugInfo] = useState<string>("")
   const router = useRouter()
+  const { data: session } = useSession()
 
-  // Persist courseId in localStorage
   useEffect(() => {
     const storedCourseId = localStorage.getItem("currentCourseId")
     if (storedCourseId) {
@@ -40,6 +40,11 @@ export function CreateCourseWizard() {
   }
 
   const handleCourseSpecsSubmission = async (specs: any) => {
+    if (!session) {
+      setError("You must be logged in to create a course")
+      return
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -55,6 +60,7 @@ export function CreateCourseWizard() {
           courseType,
           includeExams,
           examCount,
+          userId: session.user.id,
         }),
       })
 
@@ -65,12 +71,8 @@ export function CreateCourseWizard() {
         throw new Error(data.error || data.details || "Failed to start course generation")
       }
 
-      // Store courseId in localStorage
       localStorage.setItem("currentCourseId", data.courseId)
       setCourseId(data.courseId)
-
-      // Don't navigate away immediately
-      // router.push("/courses")
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
@@ -90,8 +92,6 @@ export function CreateCourseWizard() {
         const data = await response.json()
         console.log("Status API response:", data)
 
-        setDebugInfo(JSON.stringify(data, null, 2))
-
         if (!response.ok) {
           throw new Error(data.error || "Failed to fetch course status")
         }
@@ -106,7 +106,7 @@ export function CreateCourseWizard() {
         if (data.status === "completed") {
           setIsLoading(false)
           setProgress(null)
-          localStorage.removeItem("currentCourseId") // Clean up
+          localStorage.removeItem("currentCourseId")
           clearInterval(pollInterval)
           router.push(`/courses/${courseId}`)
         } else if (data.status === "error") {
@@ -115,18 +115,15 @@ export function CreateCourseWizard() {
       } catch (err) {
         console.error("Error polling course status:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
-        setDebugInfo(`Error: ${err instanceof Error ? err.message : "Unknown error"}`)
         setIsLoading(false)
         setProgress(null)
-        localStorage.removeItem("currentCourseId") // Clean up on error
+        localStorage.removeItem("currentCourseId")
         clearInterval(pollInterval)
       }
     }
 
     if (courseId && isLoading) {
-      // Initial poll immediately
       pollCourseStatus()
-      // Then poll every 3 seconds
       pollInterval = setInterval(pollCourseStatus, 3000)
     }
 
