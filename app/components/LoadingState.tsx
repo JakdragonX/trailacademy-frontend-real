@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Minimize2, Maximize2 } from "lucide-react"
+import { Loader2, Minimize2, Maximize2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 
 interface LoadingStateProps {
@@ -16,19 +16,19 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({ task, progress, isMinimized, onMinimize, onMaximize }: LoadingStateProps) {
-  const [localIsMinimized, setLocalIsMinimized] = useState(isMinimized || false)
+  const [localIsMinimized, setLocalIsMinimized] = useState(isMinimized || false);
 
   useEffect(() => {
-    setLocalIsMinimized(isMinimized || false)
-  }, [isMinimized])
+    setLocalIsMinimized(isMinimized || false);
+  }, [isMinimized]);
 
   if (localIsMinimized) {
     return (
       <Button
-        className="fixed bottom-4 right-4 z-50"
+        className="fixed top-4 right-4 z-50"
         onClick={() => {
-          setLocalIsMinimized(false)
-          onMaximize && onMaximize()
+          setLocalIsMinimized(false);
+          onMaximize && onMaximize();
         }}
       >
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -46,8 +46,8 @@ export function LoadingState({ task, progress, isMinimized, onMinimize, onMaximi
           variant="ghost"
           size="sm"
           onClick={() => {
-            setLocalIsMinimized(true)
-            onMinimize && onMinimize()
+            setLocalIsMinimized(true);
+            onMinimize && onMinimize();
           }}
         >
           <Minimize2 className="h-4 w-4" />
