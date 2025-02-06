@@ -159,6 +159,7 @@ async function generateCourseContent(courseId: string, courseData: any) {
         modules: allModules,
         exams: allExams,
         currentModule: endModule,
+        totalModules: courseData.moduleCount, // Updated line
         lastUpdated: new Date().toISOString(),
       }
 
