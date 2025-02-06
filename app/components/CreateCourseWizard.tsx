@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -21,8 +21,17 @@ export function CreateCourseWizard() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const [includeExams, setIncludeExams] = useState(false)
   const [examCount, setExamCount] = useState(1)
-  const [debugInfo, setDebugInfo] = useState<string>("") // Added debug state
+  const [debugInfo, setDebugInfo] = useState<string>("")
   const router = useRouter()
+
+  // Persist courseId in localStorage
+  useEffect(() => {
+    const storedCourseId = localStorage.getItem("currentCourseId")
+    if (storedCourseId) {
+      setCourseId(storedCourseId)
+      setIsLoading(true)
+    }
+  }, [])
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -31,12 +40,11 @@ export function CreateCourseWizard() {
   }
 
   const handleCourseSpecsSubmission = async (specs: any) => {
-    setIsLoading(true)
-    setError(null)
-    setProgress({ current: 0, total: specs.moduleCount })
-
     try {
-      console.log("Submitting course specifications:", { ...specs, courseType, includeExams, examCount })
+      setIsLoading(true)
+      setError(null)
+      setProgress({ current: 0, total: specs.moduleCount })
+
       const response = await fetch("/api/courses/generate", {
         method: "POST",
         headers: {
@@ -57,8 +65,12 @@ export function CreateCourseWizard() {
         throw new Error(data.error || data.details || "Failed to start course generation")
       }
 
+      // Store courseId in localStorage
+      localStorage.setItem("currentCourseId", data.courseId)
       setCourseId(data.courseId)
-      router.push("/courses")
+
+      // Don't navigate away immediately
+      // router.push("/courses")
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
@@ -78,13 +90,13 @@ export function CreateCourseWizard() {
         const data = await response.json()
         console.log("Status API response:", data)
 
-        setDebugInfo(JSON.stringify(data, null, 2)) // Update: Added debug info setting
+        setDebugInfo(JSON.stringify(data, null, 2))
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to fetch course status")
         }
 
-        if (data.currentModule && data.totalModules) {
+        if (data.currentModule !== undefined && data.totalModules) {
           setProgress({
             current: data.currentModule,
             total: data.totalModules,
@@ -94,6 +106,7 @@ export function CreateCourseWizard() {
         if (data.status === "completed") {
           setIsLoading(false)
           setProgress(null)
+          localStorage.removeItem("currentCourseId") // Clean up
           clearInterval(pollInterval)
           router.push(`/courses/${courseId}`)
         } else if (data.status === "error") {
@@ -102,18 +115,19 @@ export function CreateCourseWizard() {
       } catch (err) {
         console.error("Error polling course status:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
-        setDebugInfo(`Error: ${err instanceof Error ? err.message : "Unknown error"}`) // Update: Added debug info setting for errors
+        setDebugInfo(`Error: ${err instanceof Error ? err.message : "Unknown error"}`)
         setIsLoading(false)
         setProgress(null)
+        localStorage.removeItem("currentCourseId") // Clean up on error
         clearInterval(pollInterval)
       }
     }
 
     if (courseId && isLoading) {
-      // Poll every 3 seconds
-      pollInterval = setInterval(pollCourseStatus, 3000)
-      // Initial poll
+      // Initial poll immediately
       pollCourseStatus()
+      // Then poll every 3 seconds
+      pollInterval = setInterval(pollCourseStatus, 3000)
     }
 
     return () => {
@@ -137,39 +151,41 @@ export function CreateCourseWizard() {
               </Alert>
             )}
 
-            <div className="space-y-8">
-              {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
+            {!isLoading && (
+              <div className="space-y-8">
+                {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
 
-              {step === 2 && (
-                <>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
-                    <Label htmlFor="include-exams" className="text-sm font-medium text-gray-700">
-                      Include Exams
-                    </Label>
-                  </div>
-                  {includeExams && (
-                    <div className="mb-4">
-                      <Label htmlFor="exam-count">Number of Exams</Label>
-                      <Input
-                        id="exam-count"
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={examCount}
-                        onChange={(e) => setExamCount(Number.parseInt(e.target.value))}
-                      />
+                {step === 2 && (
+                  <>
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Switch id="include-exams" checked={includeExams} onCheckedChange={setIncludeExams} />
+                      <Label htmlFor="include-exams" className="text-sm font-medium text-gray-700">
+                        Include Exams
+                      </Label>
                     </div>
-                  )}
-                  <CourseSpecificationForm
-                    onSubmit={handleCourseSpecsSubmission}
-                    onBack={() => setStep(1)}
-                    includeExams={includeExams}
-                    examCount={examCount}
-                  />
-                </>
-              )}
-            </div>
+                    {includeExams && (
+                      <div className="mb-4">
+                        <Label htmlFor="exam-count">Number of Exams</Label>
+                        <Input
+                          id="exam-count"
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={examCount}
+                          onChange={(e) => setExamCount(Number.parseInt(e.target.value))}
+                        />
+                      </div>
+                    )}
+                    <CourseSpecificationForm
+                      onSubmit={handleCourseSpecsSubmission}
+                      onBack={() => setStep(1)}
+                      includeExams={includeExams}
+                      examCount={examCount}
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -178,7 +194,7 @@ export function CreateCourseWizard() {
           task="Generating your course content..."
           progress={progress}
           courseId={courseId}
-          debugInfo={debugInfo} // Pass debugInfo to LoadingState
+          debugInfo={debugInfo}
         />
       )}
     </>
