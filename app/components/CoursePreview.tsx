@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,13 +8,14 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { StudentModuleView } from "./StudentModuleView"
 import { ModuleEditor } from "./ModuleEditor"
 
-export function CoursePreview({ course, onBack }) {
+export function CoursePreview({ course, onBack, onSave }) {
   const [selectedModule, setSelectedModule] = useState(null)
   const [selectedExam, setSelectedExam] = useState(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isEditingModule, setIsEditingModule] = useState(false)
+  const [editedCourse, setEditedCourse] = useState(course)
 
-  if (!course || !course.modules) {
+  if (!editedCourse || !editedCourse.modules) {
     return (
       <div className="space-y-6">
         <h3 className="text-xl font-semibold mb-4">Course Preview</h3>
@@ -32,13 +33,13 @@ export function CoursePreview({ course, onBack }) {
   }
 
   const handleModuleSave = (updatedModule) => {
-    // Here you would typically update the course data
-    console.log("Updated module:", updatedModule)
+    const updatedModules = editedCourse.modules.map((m) => (m.id === updatedModule.id ? updatedModule : m))
+    setEditedCourse({ ...editedCourse, modules: updatedModules })
     setIsEditingModule(false)
   }
 
   const handlePreview = (item) => {
-    if (item.id.startsWith('module')) {
+    if (item.id.startsWith("module")) {
       setSelectedModule(item)
       setSelectedExam(null)
     } else {
@@ -48,51 +49,48 @@ export function CoursePreview({ course, onBack }) {
     setIsPreviewOpen(true)
   }
 
+  const handleSaveCourse = () => {
+    onSave(editedCourse)
+  }
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">Course Preview</h3>
       <Card>
         <CardContent className="p-6">
-          <h4 className="text-lg font-semibold mb-2">{course.title || "Untitled Course"}</h4>
-          <p className="text-gray-600 mb-4">{course.description || "No description available."}</p>
+          <h4 className="text-lg font-semibold mb-2">{editedCourse.title || "Untitled Course"}</h4>
+          <p className="text-gray-600 mb-4">{editedCourse.description || "No description available."}</p>
           <div className="mb-4">
-            <strong>Target Audience:</strong> {course.audience || "Not specified"}
+            <strong>Target Audience:</strong> {editedCourse.audience || "Not specified"}
           </div>
           <div className="mb-4">
-            <strong>Number of Modules:</strong> {course.modules.length}
+            <strong>Number of Modules:</strong> {editedCourse.modules.length}
           </div>
-          {course.exams && (
+          {editedCourse.exams && (
             <div className="mb-4">
-              <strong>Number of Exams:</strong> {course.exams.length}
+              <strong>Number of Exams:</strong> {editedCourse.exams.length}
             </div>
           )}
         </CardContent>
       </Card>
 
       <ModuleList
-        initialModules={course.modules}
-        exams={course.exams}
+        initialModules={editedCourse.modules}
+        exams={editedCourse.exams}
         onPreview={handlePreview}
         onEdit={handleModuleEdit}
+        onReorder={(newModules) => setEditedCourse({ ...editedCourse, modules: newModules })}
       />
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl">
-          <StudentModuleView
-            module={selectedModule}
-            exam={selectedExam}
-            onClose={() => setIsPreviewOpen(false)}
-          />
+          <StudentModuleView module={selectedModule} exam={selectedExam} onClose={() => setIsPreviewOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEditingModule} onOpenChange={setIsEditingModule}>
         <DialogContent className="max-w-4xl">
-          <ModuleEditor
-            module={selectedModule}
-            onSave={handleModuleSave}
-            onCancel={() => setIsEditingModule(false)}
-          />
+          <ModuleEditor module={selectedModule} onSave={handleModuleSave} onCancel={() => setIsEditingModule(false)} />
         </DialogContent>
       </Dialog>
 
@@ -100,7 +98,7 @@ export function CoursePreview({ course, onBack }) {
         <Button onClick={onBack} variant="outline">
           Back
         </Button>
-        <Button>Save Course</Button>
+        <Button onClick={handleSaveCourse}>Save Course</Button>
       </div>
     </div>
   )
