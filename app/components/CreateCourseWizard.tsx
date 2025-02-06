@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { LoadingState } from "./LoadingState"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle } from 'lucide-react'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,7 @@ export function CreateCourseWizard() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const [includeExams, setIncludeExams] = useState(false)
   const [examCount, setExamCount] = useState(1)
+  const [debugInfo, setDebugInfo] = useState<string>("") // Added debug state
   const router = useRouter()
 
   const handleCourseTypeSelection = (type: string) => {
@@ -77,6 +78,8 @@ export function CreateCourseWizard() {
         const data = await response.json()
         console.log("Status API response:", data)
 
+        setDebugInfo(JSON.stringify(data, null, 2)) // Update: Added debug info setting
+
         if (!response.ok) {
           throw new Error(data.error || "Failed to fetch course status")
         }
@@ -99,6 +102,7 @@ export function CreateCourseWizard() {
       } catch (err) {
         console.error("Error polling course status:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
+        setDebugInfo(`Error: ${err instanceof Error ? err.message : "Unknown error"}`) // Update: Added debug info setting for errors
         setIsLoading(false)
         setProgress(null)
         clearInterval(pollInterval)
@@ -170,7 +174,12 @@ export function CreateCourseWizard() {
         </Card>
       </div>
       {isLoading && courseId && (
-        <LoadingState task="Generating your course content..." progress={progress} courseId={courseId} />
+        <LoadingState
+          task="Generating your course content..."
+          progress={progress}
+          courseId={courseId}
+          debugInfo={debugInfo} // Pass debugInfo to LoadingState
+        />
       )}
     </>
   )
