@@ -1,20 +1,21 @@
-import { NextResponse } from "next/server"
-import OpenAI from "openai"
+import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 })
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-
-    // Validate required fields
+    
     if (!body.title || !body.moduleCount || !body.courseType) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
     }
 
-    // Generate course content using OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
@@ -22,53 +23,71 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: "You are an expert course creator. Respond with valid JSON only.",
+          content: "You are an expert course creator. Respond with valid JSON only."
         },
         {
           role: "user",
-          content: `Create a course with the following details:
+          content: `Generate content for a course with these specifications:
             Title: ${body.title}
             Type: ${body.courseType}
-            Target Audience: ${body.audience || "General"}
+            Target Audience: ${body.audience || 'General'}
             Number of Modules: ${body.moduleCount}
-            Description: ${body.description || "A comprehensive course"}
+            Description: ${body.description || 'A comprehensive course'}
             
-            Format the response as a JSON object with:
+            Generate ONLY the modules array in this format:
             {
-              "title": string,
-              "description": string,
-              "audience": string,
               "modules": [{
+                "id": string (unique identifier),
                 "title": string,
                 "description": string,
                 "content": {
                   "lecture": string,
                   "readings": [{"title": string, "pages": string}],
                   "videos": [{"title": string, "duration": string}]
+                },
+                "quiz": {
+                  "questions": [
+                    {
+                      "question": string,
+                      "options": string[],
+                      "correct": number,
+                      "explanation": string
+                    }
+                  ]
                 }
               }]
-            }`,
-        },
-      ],
+            }`
+        }
+      ]
     })
 
     const responseContent = completion.choices[0].message.content
-
+    
     try {
-      const parsedCourse = JSON.parse(responseContent)
-      return NextResponse.json({ course: parsedCourse })
+      const { modules } = JSON.parse(responseContent)
+      // Combine AI-generated modules with user-provided course details
+      const course = {
+        title: body.title,
+        description: body.description,
+        audience: body.audience,
+        modules
+      }
+      return NextResponse.json({ course })
     } catch (parseError) {
-      console.error("Failed to parse OpenAI response:", responseContent)
-      return NextResponse.json({ error: "Invalid course format returned" }, { status: 500 })
+      console.error('Failed to parse OpenAI response:', responseContent)
+      return NextResponse.json(
+        { error: 'Invalid course format returned' },
+        { status: 500 }
+      )
     }
   } catch (error) {
-    console.error("Course generation error:", error)
+    console.error('Course generation error:', error)
     return NextResponse.json(
-      {
-        error: "Failed to generate course",
-        details: error instanceof Error ? error.message : "Unknown error",
+      { 
+        error: 'Failed to generate course',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
