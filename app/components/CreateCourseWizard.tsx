@@ -7,6 +7,7 @@ import { CourseTypeSelection } from "./CourseTypeSelection"
 import { CourseSpecificationForm } from "./CourseSpecificationForm"
 import { CoursePreview } from "./CoursePreview"
 import { LoadingState } from "./LoadingState"
+import { AlertCircle } from "lucide-react"
 
 export function CreateCourseWizard() {
   const [step, setStep] = useState(1)
@@ -62,22 +63,27 @@ export function CreateCourseWizard() {
   }
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardContent className="p-6">
-        <h2 className="text-2xl font-semibold mb-6">Create a New Course</h2>
+    <div className="min-h-screen bg-[#FAF6F1] py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+        <CardContent className="p-6 sm:p-10">
+          <h2 className="text-3xl font-bold text-[#2D4F1E] mb-6">Create a New Course</h2>
 
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
+          <div className="space-y-8">
+            {step === 1 && <CourseTypeSelection onSelect={handleCourseTypeSelection} />}
 
-        {step === 2 && <CourseSpecificationForm onSubmit={handleCourseSpecsSubmission} onBack={() => setStep(1)} />}
+            {step === 2 && <CourseSpecificationForm onSubmit={handleCourseSpecsSubmission} onBack={() => setStep(1)} />}
 
-        {step === 3 && generatedCourse && <CoursePreview course={generatedCourse} onBack={() => setStep(2)} />}
-      </CardContent>
-    </Card>
+            {step === 3 && generatedCourse && <CoursePreview course={generatedCourse} onBack={() => setStep(2)} />}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
