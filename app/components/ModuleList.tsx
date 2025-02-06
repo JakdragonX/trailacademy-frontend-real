@@ -10,7 +10,7 @@ import { Eye, GripVertical, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function ModuleList({ initialModules, onViewContent }) {
-  const [modules, setModules] = useState(initialModules)
+  const [modules, setModules] = useState(initialModules || [])
   const [selectedModule, setSelectedModule] = useState(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [editingModule, setEditingModule] = useState(null)
@@ -70,8 +70,12 @@ export function ModuleList({ initialModules, onViewContent }) {
                                 <GripVertical className="h-6 w-6 text-gray-400" />
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold text-[#2D4F1E]">{module.title}</h3>
-                                <p className="text-gray-600 mt-1">{module.description}</p>
+                                <h3 className="text-xl font-semibold text-[#2D4F1E]">
+                                  {module.title || `Module ${index + 1}`}
+                                </h3>
+                                <p className="text-gray-600 mt-1">
+                                  {module.description || "No description available."}
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
