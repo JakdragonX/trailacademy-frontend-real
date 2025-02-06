@@ -52,6 +52,35 @@ const systemPrompt = `You are an expert course creator. You MUST respond with ON
         ]
       }
     }
+  ],
+  "exams": [
+    {
+      "id": "exam-1",
+      "title": "Exam Title",
+      "description": "Exam Description",
+      "questions": [
+        {
+          "type": "multiple-choice",
+          "question": "Question text",
+          "options": [
+            {
+              "text": "Option 1",
+              "isCorrect": false
+            },
+            {
+              "text": "Option 2",
+              "isCorrect": true
+            }
+          ],
+          "explanation": "Explanation for the correct answer"
+        },
+        {
+          "type": "essay",
+          "question": "Essay question text",
+          "sampleAnswer": "Sample answer or outline for the essay question"
+        }
+      ]
+    }
   ]
 }`
 
@@ -73,8 +102,11 @@ export async function POST(request: Request) {
       audience: body.audience,
       courseType: body.courseType,
       moduleCount: body.moduleCount,
+      includeExams: body.includeExams,
+      examCount: body.examCount,
       status: "processing",
       modules: [],
+      exams: [],
       currentModule: 0,
       totalModules: body.moduleCount,
       createdAt: new Date().toISOString(),
@@ -105,6 +137,7 @@ export async function POST(request: Request) {
 async function generateCourseContent(courseId: string, courseData: any) {
   const totalChunks = Math.ceil(courseData.moduleCount / CHUNK_SIZE)
   let allModules: any[] = []
+  let allExams: any[] = []
 
   for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
     const startModule = chunkIndex * CHUNK_SIZE + 1
@@ -113,13 +146,15 @@ async function generateCourseContent(courseId: string, courseData: any) {
     try {
       console.log(`Generating modules ${startModule}-${endModule} for course ${courseId}`)
 
-      const newModules = await generateModules(courseData, startModule, endModule, allModules)
-      allModules = [...allModules, ...newModules]
+      const { modules, exams } = await generateModulesAndExams(courseData, startModule, endModule, allModules, allExams)
+      allModules = [...allModules, ...modules]
+      allExams = [...allExams, ...exams]
 
-      // Update course with all modules generated so far
+      // Update course with all modules and exams generated so far
       const updatedCourse = {
         ...(await kv.get(courseId)),
         modules: allModules,
+        exams: allExams,
         currentModule: endModule,
         lastUpdated: new Date().toISOString(),
       }
@@ -130,7 +165,7 @@ async function generateCourseContent(courseId: string, courseData: any) {
       }
 
       await kv.set(courseId, updatedCourse)
-      console.log(`Updated course ${courseId} with modules ${startModule}-${endModule}`)
+      console.log(`Updated course ${courseId} with modules ${startModule}-${endModule} and exams`)
     } catch (error) {
       console.error(`Error generating modules ${startModule}-${endModule}:`, error)
       const currentCourse = await kv.get(courseId)
@@ -145,7 +180,13 @@ async function generateCourseContent(courseId: string, courseData: any) {
   }
 }
 
-async function generateModules(courseData: any, startModule: number, endModule: number, existingModules: any[]) {
+async function generateModulesAndExams(
+  courseData: any,
+  startModule: number,
+  endModule: number,
+  existingModules: any[],
+  existingExams: any[],
+) {
   const moduleSummaries = existingModules.map((module) => ({
     id: module.id,
     title: module.title,
@@ -153,19 +194,34 @@ async function generateModules(courseData: any, startModule: number, endModule: 
     keyTerms: extractKeyTerms(module.content.lecture),
   }))
 
+  const examSummaries = existingExams.map((exam) => ({
+    id: exam.id,
+    title: exam.title,
+    description: exam.description,
+  }))
+
   const prompt = `Create modules ${startModule} to ${endModule} for a ${courseData.courseType} course titled "${courseData.title}".
 Target audience: ${courseData.audience || "General"}
 Course description: ${courseData.description || "A comprehensive course"}
+${courseData.includeExams ? `Include ${courseData.examCount} exam(s) throughout the course.` : ""}
 
 Existing modules:
 ${JSON.stringify(moduleSummaries, null, 2)}
+
+${
+  courseData.includeExams
+    ? `Existing exams:
+${JSON.stringify(examSummaries, null, 2)}`
+    : ""
+}
 
 Remember to:
 1. Create detailed, engaging content for each module
 2. Include practical examples and real-world applications
 3. Create challenging but fair quiz questions
 4. Provide thorough explanations for quiz answers
-5. Ensure new content builds upon and doesn't duplicate existing modules`
+5. Ensure new content builds upon and doesn't duplicate existing modules
+${courseData.includeExams ? "6. Create comprehensive exams that cover multiple modules" : ""}`
 
   const completion = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
@@ -189,10 +245,17 @@ Remember to:
     if (!parsedResponse.modules || !Array.isArray(parsedResponse.modules)) {
       throw new Error("Invalid response format: missing modules array")
     }
-    return parsedResponse.modules.map((module: any, index: number) => ({
+    const modules = parsedResponse.modules.map((module: any, index: number) => ({
       ...module,
       id: module.id || `module-${startModule + index}`,
     }))
+    const exams = parsedResponse.exams
+      ? parsedResponse.exams.map((exam: any, index: number) => ({
+          ...exam,
+          id: exam.id || `exam-${existingExams.length + index + 1}`,
+        }))
+      : []
+    return { modules, exams }
   } catch (error) {
     console.error("Failed to parse OpenAI response:", responseContent)
     throw new Error("Failed to parse course content")
