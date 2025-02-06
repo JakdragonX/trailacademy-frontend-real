@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CourseTypeSelection } from "./CourseTypeSelection"
@@ -15,6 +15,7 @@ export function CreateCourseWizard() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [generatedCourse, setGeneratedCourse] = useState(null)
+  const [courseId, setCourseId] = useState<string | null>(null)
 
   const handleCourseTypeSelection = (type: string) => {
     setError(null)
@@ -40,25 +41,46 @@ export function CreateCourseWizard() {
 
       const data = await response.json()
 
-      console.log("API Response:", data)
-
       if (!response.ok) {
-        throw new Error(data.error || data.details || "Failed to generate course")
+        throw new Error(data.error || data.details || "Failed to start course generation")
       }
 
-      if (!data.course) {
-        throw new Error("No course data received")
-      }
-
-      setGeneratedCourse(data.course)
-      setStep(3)
+      setCourseId(data.courseId)
     } catch (err) {
       console.error("Course generation error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
-    } finally {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    const pollCourseStatus = async () => {
+      if (!courseId) return
+
+      try {
+        const response = await fetch(`/api/courses/status?courseId=${courseId}`)
+        const data = await response.json()
+
+        if (data.status === "completed") {
+          setGeneratedCourse(data)
+          setStep(3)
+          setIsLoading(false)
+        } else if (data.status === "error") {
+          throw new Error("Course generation failed")
+        } else {
+          setTimeout(pollCourseStatus, 5000) // Poll every 5 seconds
+        }
+      } catch (err) {
+        console.error("Error polling course status:", err)
+        setError(err instanceof Error ? err.message : "An unexpected error occurred")
+        setIsLoading(false)
+      }
+    }
+
+    if (courseId) {
+      pollCourseStatus()
+    }
+  }, [courseId])
 
   if (isLoading) {
     return <LoadingState task="Generating your course content..." />
