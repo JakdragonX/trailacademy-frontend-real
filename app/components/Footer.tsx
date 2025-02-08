@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
+import { UnplugIcon } from "lucide-react"
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -16,9 +16,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/pricing">Pricing</Link>
-              </li>
-              <li>
-                <Link href="/enterprise">Enterprise</Link>
               </li>
             </ul>
           </div>
@@ -43,33 +40,21 @@ export default function Footer() {
                 <Link href="/about">About</Link>
               </li>
               <li>
-                <Link href="/careers">Careers</Link>
-              </li>
-              <li>
-                <Link href="/contact">Contact</Link>
+                <Link href="/community">Ccomunity</Link>
               </li>
             </ul>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Connect</h3>
             <div className="flex space-x-4">
-              <Link href="https://facebook.com/trail" className="hover:text-[#FAF6F1]">
-                <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="https://twitter.com/trail" className="hover:text-[#FAF6F1]">
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="https://linkedin.com/company/trail" className="hover:text-[#FAF6F1]">
-                <Linkedin className="h-5 w-5" />
-              </Link>
-              <Link href="https://instagram.com/trail" className="hover:text-[#FAF6F1]">
-                <Instagram className="h-5 w-5" />
+              <Link href="https://discord.gg/3n7KPDxdtZ" className="hover:text-[#FAF6F1]">
+                <UnplugIcon className="h-5 w-5" />
               </Link>
             </div>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-[#FAF6F1]/10 text-sm text-center text-[#FAF6F1]/70">
-          © {currentYear} Trail Academy, Inc. All rights reserved.
+          © {currentYear} trail academy, inc. All rights reserved.
         </div>
       </div>
     </footer>

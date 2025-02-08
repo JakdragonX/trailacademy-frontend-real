@@ -21,6 +21,19 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+
+  async rewrites() {
+    return [
+      {
+        source: "/:path*",
+        destination: "/:path*",
+      },
+      {
+        source: "/:path*",
+        destination: "/404",
+      },
+    ]
+  },
 }
 
 mergeConfig(nextConfig, userConfig)
@@ -44,5 +57,6 @@ function mergeConfig(nextConfig, userConfig) {
     }
   }
 }
+
 
 export default nextConfig

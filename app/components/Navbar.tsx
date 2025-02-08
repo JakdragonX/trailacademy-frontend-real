@@ -1,17 +1,49 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import Link from "next/link";
-import Logo from "./Logo";
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Logo from "./Logo"
+import { LoadingState } from "./LoadingState"
+import { Button } from "@/components/ui/button"
+import { Popup } from "./Popup"
+import type React from "react" // Added import for React
 
 export default function Navbar() {
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false)
+  const [loadingState, setLoadingState] = useState(null)
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    setIsClient(true)
 
-  if (!isClient) return null;
+    const checkLoadingState = () => {
+      const keys = Object.keys(localStorage)
+      const loadingStateKey = keys.find((key) => key.startsWith("loadingState_"))
+      if (loadingStateKey) {
+        const state = JSON.parse(localStorage.getItem(loadingStateKey))
+        setLoadingState({
+          courseId: loadingStateKey.split("_")[1],
+          ...state,
+        })
+      } else {
+        setLoadingState(null)
+      }
+    }
+
+    checkLoadingState()
+    window.addEventListener("storage", checkLoadingState)
+
+    return () => {
+      window.removeEventListener("storage", checkLoadingState)
+    }
+  }, [])
+
+  const handleUnavailableFeature = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsPopupOpen(true)
+  }
+
+  if (!isClient) return null
 
   return (
     <nav className="bg-[#2D4F1E] text-[#FAF6F1] p-4 sticky top-0 z-50 shadow-lg">
@@ -31,21 +63,29 @@ export default function Navbar() {
             Community
           </Link>
           <div className="flex items-center space-x-2">
-            <Link
-              href="/login"
+            <Button
+              onClick={handleUnavailableFeature}
               className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
             >
               Login
-            </Link>
-            <Link
-              href="/signup"
+            </Button>
+            <Button
+              onClick={handleUnavailableFeature}
               className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
             >
               Sign Up
-            </Link>
+            </Button>
           </div>
         </div>
+        {loadingState && (
+          <LoadingState
+            task="Generating your course content..."
+            progress={loadingState.progress}
+            courseId={loadingState.courseId}
+          />
+        )}
       </div>
+      <Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />
     </nav>
-  );
+  )
 }
