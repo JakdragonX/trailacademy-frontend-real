@@ -1,5 +1,7 @@
+"use client"
+
 import { useState, useEffect } from 'react'
-import { supabase } from '@/src/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 
 export default function SupabaseTest() {
   const [status, setStatus] = useState('Testing connection...')
@@ -23,6 +25,5 @@ export default function SupabaseTest() {
     <div className="fixed bottom-4 right-4 p-4 bg-white rounded-lg shadow-lg">
       {status}
     </div>
-  </div>
   )
 }
