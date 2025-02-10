@@ -1,25 +1,30 @@
 import { createClient } from '@supabase/supabase-js'
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+// Helper to clean environment variables
+const cleanEnvValue = (value: string | undefined) => {
+  if (!value) return undefined
+  // Remove surrounding quotes if they exist
+  return value.replace(/^["'](.+(?=["']$))["']$/, '$1')
+}
+
+const supabaseUrl = cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_URL)
+const supabaseAnonKey = cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+if (!supabaseUrl) {
   throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
 }
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+if (!supabaseAnonKey) {
   throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
 }
 
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Admin client - only use server-side
 export const createAdminClient = () => {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const serviceRoleKey = cleanEnvValue(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  if (!serviceRoleKey) {
     throw new Error('Missing env.SUPABASE_SERVICE_ROLE_KEY')
   }
   
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+  return createClient(supabaseUrl, serviceRoleKey)
 }
