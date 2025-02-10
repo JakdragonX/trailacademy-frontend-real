@@ -1,6 +1,6 @@
 "use client"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/shared/ui/dialog"
-import { Button } from "../../components/shared/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/src/components/shared/ui/dialog"
+import { Button } from "@/src/components/shared/ui/button"
 
 interface PopupProps {
   isOpen: boolean
@@ -22,13 +22,3 @@ export function Popup({ isOpen, onClose }: PopupProps) {
     </Dialog>
   )
 }
-
-
-
-
-
-
-
-
-
-

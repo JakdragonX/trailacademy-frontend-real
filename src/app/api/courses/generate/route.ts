@@ -1,6 +1,6 @@
 // app/api/courses/generate/route.ts
 import { NextResponse } from 'next/server'
-import { generateCourse } from '@/lib/aiService'
+import { generateCourse } from '@/src/lib/aiService'
 
 export async function POST(request: Request) {
   try {

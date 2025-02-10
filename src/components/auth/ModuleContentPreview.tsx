@@ -1,7 +1,7 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/src/components/shared/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/shared/ui/tabs"
 import { QuizView } from './QuizView'
 
 export function ModuleContentPreview({ module, isOpen, onClose }) {

@@ -7,7 +7,7 @@ import { ContentSpecificationForm } from './ContentSpecificationForm'
 import { LoadingState } from './LoadingState'
 import { StudentModuleView } from './StudentModuleView'
 import { Button } from "@/src/components/shared/ui/button"
-import { createCourse } from '@/lib/courseService'
+import { createCourse } from '@/src/lib/courseService'
 import { ModuleList } from './ModuleList'
 
 export function CreateCourseWizard() {

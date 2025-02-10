@@ -6,18 +6,18 @@ import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "@/lib/utils"
-import { Button } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/button"
-import { Input } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/input"
-import { Separator } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/separator"
-import { Sheet, SheetContent } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/sheet"
-import { Skeleton } @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/skeleton"
+import { cn } from "@/src/lib/utils"
+import { Button } from "@/src/components/shared/ui/button"
+import { Input } from "@/src/components/shared/ui/input"
+import { Separator } from "@/src/components/shared/ui/separator"
+import { Sheet, SheetContent } from "@/src/components/shared/ui/sheet"
+import { Skeleton } from "@/src/components/shared/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} @/components/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/shared/ui/tooltip"
+} from "@/src/components/shared/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7

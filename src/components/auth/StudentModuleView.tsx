@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/src/components/shared/ui/card"
 import { ModuleList } from './ModuleList'
 import { Book, Video, Calendar, ArrowLeft, ArrowRight } from 'lucide-react'
 import { QuizView } from './QuizView'
-import type { Module } from '@/lib/courseTemplate'
+import type { Module } from '@/src/lib/courseTemplate'
 
 interface StudentModuleViewProps {
   modules: Module[]
