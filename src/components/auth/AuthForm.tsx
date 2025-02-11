@@ -1,13 +1,22 @@
-"use client"
+'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/src/lib/supabase/client';
 import { createUserProfile } from '@/src/lib/auth/hooks';
 
 export default function AuthForm() {
+  const [origin, setOrigin] = useState<string>('')
+
   useEffect(() => {
+    // Set origin once component mounts in browser
+    setOrigin(window.location.origin)
+  }, [])
+
+  useEffect(() => {
+    if (!origin) return;
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -32,7 +41,9 @@ export default function AuthForm() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [origin]);
+
+  if (!origin) return null; // Don't render until we have the origin
 
   return (
     <div className="w-full">
@@ -50,7 +61,7 @@ export default function AuthForm() {
           },
         }}
         providers={['google']}
-        redirectTo={`${window.location.origin}/auth/callback`}
+        redirectTo={`${origin}/auth/callback`}
       />
     </div>
   );
