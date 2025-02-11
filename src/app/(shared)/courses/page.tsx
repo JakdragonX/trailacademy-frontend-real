@@ -2,7 +2,7 @@ import Navbar from "@/src/components/shared/Navbar"
 import Footer from "@/src/components/shared/Footer"
 import CoursesSidebar from "@/src/components/shared/CoursesSidebar"
 import CourseGrid from "@/src/components/shared/CourseGrid"
-import CreateCourseButton from "@/src/components/auth/CreateCourseButton"
+import CreateCourseButton from "@/src/components/priv/CreateCourseButton"
 
 export default function CoursesPage() {
   return (

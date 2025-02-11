@@ -34,6 +34,38 @@ const nextConfig = {
       },
     ]
   },
+
+  // Add redirect configuration for learn subdomain
+  async redirects() {
+    return [
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: 'learn.trailacademy.net',
+          },
+        ],
+        destination: '/learn',
+        permanent: true,
+      },
+    ]
+  },
+
+  // Add domain configuration
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://learn.trailacademy.net',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 mergeConfig(nextConfig, userConfig)
@@ -57,6 +89,5 @@ function mergeConfig(nextConfig, userConfig) {
     }
   }
 }
-
 
 export default nextConfig

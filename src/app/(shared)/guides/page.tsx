@@ -3,8 +3,8 @@
 import { useState } from "react"
 import Navbar from "@/src/components/shared/Navbar"
 import Footer from "@/src/components/shared/Footer"
-import GuideSidebar from "@/src/components/auth/GuideSidebar"
-import GuideGrid from "@/src/components/auth/GuideGrid"
+import GuideSidebar from "@/src/components/priv/GuideSidebar"
+import GuideGrid from "@/src/components/priv/GuideGrid"
 import { Button } from "@/src/components/shared/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/src/components/shared/ui/dialog"
 

@@ -2,7 +2,7 @@
 
 import Navbar from "@/src/components/shared/Navbar"
 import Footer from "@/src/components/shared/Footer"
-import { CreateCourseWizard } from "@/src/components/auth/CreateCourseWizard"
+import { CreateCourseWizard } from "@/src/components/priv/CreateCourseWizard"
 
 export default function CreatePage() {
   return (
