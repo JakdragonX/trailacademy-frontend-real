@@ -1,8 +1,7 @@
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
-// Array of valid main domains
 const MAIN_DOMAINS = ['trailacademy.net', 'demo.trailacademy.net', 'test.trailacademy.net']
 
 export async function middleware(request: NextRequest) {
@@ -13,37 +12,54 @@ export async function middleware(request: NextRequest) {
     // Get hostname and path
     const hostname = request.headers.get('host') || ''
     const path = request.nextUrl.pathname
+
+    // Refresh session if it exists
     const { data: { session } } = await supabase.auth.getSession()
 
-    // Handle learn subdomain access
+    // Handle learn subdomain
     if (hostname === 'learn.trailacademy.net') {
-      const isAuthPath = path.startsWith('/auth') || path.startsWith('/_next') || path.startsWith('/api')
-
-      // Redirect to auth if not authenticated and accessing protected pages
+      // Don't redirect these paths even without auth
+      const isAuthPath = path.startsWith('/auth') || 
+                        path.startsWith('/_next') || 
+                        path.startsWith('/api')
+      
       if (!session && !isAuthPath) {
-        console.log('Redirecting to auth - No session found')
-        return NextResponse.redirect(new URL('/auth', request.url))
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = '/auth'
+        return NextResponse.redirect(redirectUrl)
       }
       return res
     }
 
     // Redirect /learn paths on main domains to learn subdomain
-    const isMainDomain = MAIN_DOMAINS.some(domain => hostname.includes(domain))
-    if (isMainDomain && path.startsWith('/learn')) {
-      const redirectUrl = new URL(path, 'https://learn.trailacademy.net')
-      return NextResponse.redirect(redirectUrl)
+    if (path.startsWith('/learn')) {
+      const isMainDomain = MAIN_DOMAINS.some(domain => hostname.includes(domain))
+      if (isMainDomain) {
+        const redirectUrl = new URL(path, 'https://learn.trailacademy.net')
+        return NextResponse.redirect(redirectUrl)
+      }
     }
 
     return res
   } catch (error) {
     console.error('Middleware error:', error)
-    // Allow request through on failure rather than blocking access
     return NextResponse.next()
   }
 }
 
+// More specific matcher to prevent unexpected token errors
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public/.*|api/.*|assets/.*|.*\\..*).*)',
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files
+     * - api routes
+     * - assets
+     * - files with extensions
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public/.*|api/.*|assets/.*|.*\\..*$).*)',
   ],
 }

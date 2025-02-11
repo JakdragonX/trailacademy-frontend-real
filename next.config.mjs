@@ -22,6 +22,11 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
 
+  // Optimize output
+  output: 'standalone',
+  poweredByHeader: false,
+  reactStrictMode: true,
+
   // Domain and route handling
   async redirects() {
     return [
