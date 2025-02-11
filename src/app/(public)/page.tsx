@@ -6,7 +6,6 @@ import Features from "@/src/components/public/Features"
 import AboutTrail from "@/src/components/public/AboutTrail"
 import CallToAction from "@/src/components/public/CallToAction"
 import Footer from "@/src/components/shared/Footer"
-import SupabaseTest from '@/src/components/public/SupabaseTest'
 
 export default function Home() {
   return (
@@ -17,7 +16,6 @@ export default function Home() {
         <Features />
         <AboutTrail />
         <CallToAction />
-        <SupabaseTest />
       </main>
       <Footer />
     </div>
