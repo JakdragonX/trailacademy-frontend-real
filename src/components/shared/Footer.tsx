@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { UnplugIcon } from "lucide-react"
+import { LucideCable } from "lucide-react"
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -34,41 +34,18 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/about">About</Link>
-              </li>
-              <li>
-                <Link href="/community">Community</Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Connect</h3>
+            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Discord</h3>
             <div className="flex space-x-4">
               <Link href="https://discord.gg/3n7KPDxdtZ" className="hover:text-[#FAF6F1]">
-                <UnplugIcon className="h-5 w-5" />
+                <LucideCable className="h-5 w-5" />
               </Link>
             </div>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-[#FAF6F1]/10 text-sm text-center text-[#FAF6F1]/70">
-          © {currentYear} trail academy, inc. All rights reserved.
+          © {currentYear} Trail Academy, Inc. All rights reserved.
         </div>
       </div>
     </footer>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
