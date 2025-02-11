@@ -1,36 +1,46 @@
-let userConfig = undefined
-try {
-  userConfig = await import('./v0-user-next.config')
-} catch (e) {
-  // ignore error
-}
-
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-  experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
-  },
-
-  // Optimize output
+  // Output as standalone for better optimization
   output: 'standalone',
+  
+  // Disable powered by header
   poweredByHeader: false,
+  
+  // Enable React strict mode
   reactStrictMode: true,
 
-  // Domain and route handling
+  // Webpack configuration to handle modules correctly
+  webpack: (config, { isServer }) => {
+    // Fix handling of async chunks
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        minChunks: 1,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
+      }
+    }
+    return config
+  },
+
+  // Handle domain redirects
   async redirects() {
     return [
-      // Redirect any attempts to access /learn on main domains to learn subdomain
       {
         source: '/learn/:path*',
         has: [
@@ -41,71 +51,8 @@ const nextConfig = {
         ],
         permanent: true,
         destination: 'https://learn.trailacademy.net/:path*',
-      },
-      {
-        source: '/learn/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'test.trailacademy.net',
-          },
-        ],
-        permanent: false,
-        destination: 'https://learn.trailacademy.net/:path*',
       }
     ]
-  },
-
-  // Handle domain-specific content
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/:path*',
-          has: [
-            {
-              type: 'host',
-              value: 'learn.trailacademy.net',
-            },
-          ],
-          destination: '/learn/:path*',
-        }
-      ],
-      afterFiles: [
-        {
-          source: '/:path*',
-          destination: '/:path*',
-        }
-      ],
-      fallback: [
-        {
-          source: '/:path*',
-          destination: '/404',
-        }
-      ]
-    }
-  }
-}
-
-mergeConfig(nextConfig, userConfig)
-
-function mergeConfig(nextConfig, userConfig) {
-  if (!userConfig) {
-    return
-  }
-
-  for (const key in userConfig) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...userConfig[key],
-      }
-    } else {
-      nextConfig[key] = userConfig[key]
-    }
   }
 }
 
