@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
+// Array of valid main domains
+const MAIN_DOMAINS = ['trailacademy.net', 'demo.trailacademy.net']
+
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req: request, res })
@@ -13,32 +16,27 @@ export async function middleware(request: NextRequest) {
 
   // Handle learn subdomain access
   if (hostname === 'learn.trailacademy.net') {
-    // Will need auth for protected routes later
-    // if (!session) {
-    //   return NextResponse.redirect(new URL('/auth', request.url))
-    // }
+    // Protected routes require authentication
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth', request.url))
+    }
     return res
   }
 
   // Prevent access to /learn routes on non-learn domains
   if (path.startsWith('/learn') && hostname !== 'learn.trailacademy.net') {
-    return NextResponse.redirect(new URL(`https://learn.trailacademy.net${path}`, request.url))
+    // Check if the request is coming from any of our main domains
+    const isMainDomain = MAIN_DOMAINS.some(domain => hostname.includes(domain))
+    if (isMainDomain) {
+      return NextResponse.redirect(new URL(`https://learn.trailacademy.net${path}`, request.url))
+    }
   }
 
   return res
 }
 
-// Configure what routes middleware runs on
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - public files
-     */
     '/((?!_next/static|_next/image|favicon.ico|public|.*\\..*$).*)',
   ],
 }
