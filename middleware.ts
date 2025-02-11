@@ -17,8 +17,10 @@ export async function middleware(request: NextRequest) {
 
     // Handle learn subdomain access
     if (hostname === 'learn.trailacademy.net') {
-      // If not authenticated and not already on auth page, redirect to auth
-      if (!session && !path.startsWith('/auth')) {
+      const isAuthPath = path.startsWith('/auth') || path.startsWith('/_next') || path.startsWith('/api')
+
+      // Redirect to auth if not authenticated and accessing protected pages
+      if (!session && !isAuthPath) {
         console.log('Redirecting to auth - No session found')
         return NextResponse.redirect(new URL('/auth', request.url))
       }
@@ -26,24 +28,22 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect /learn paths on main domains to learn subdomain
-    if (path.startsWith('/learn')) {
-      const isMainDomain = MAIN_DOMAINS.some(domain => hostname.includes(domain))
-      if (isMainDomain) {
-        const redirectUrl = new URL(path, 'https://learn.trailacademy.net')
-        return NextResponse.redirect(redirectUrl)
-      }
+    const isMainDomain = MAIN_DOMAINS.some(domain => hostname.includes(domain))
+    if (isMainDomain && path.startsWith('/learn')) {
+      const redirectUrl = new URL(path, 'https://learn.trailacademy.net')
+      return NextResponse.redirect(redirectUrl)
     }
 
     return res
   } catch (error) {
     console.error('Middleware error:', error)
-    // On error, allow the request through rather than breaking the site
+    // Allow request through on failure rather than blocking access
     return NextResponse.next()
   }
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public|.*\\..*$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/.*|api/.*|assets/.*|.*\\..*).*)',
   ],
 }

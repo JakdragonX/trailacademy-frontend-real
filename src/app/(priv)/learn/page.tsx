@@ -2,28 +2,34 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/src/lib/supabase/client'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function LearnPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [url, setUrl] = useState<string>('Loading...')
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          router.push('/auth')
+          return
+        }
+        
+        setUrl(window.location.href)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Auth check error:', error)
         router.push('/auth')
-        return
       }
-      
-      setUrl(window.location.href)
-      setIsLoading(false)
     }
 
     checkAuth()
-  }, [router])
+  }, [router, supabase.auth])
 
   if (isLoading) {
     return (
