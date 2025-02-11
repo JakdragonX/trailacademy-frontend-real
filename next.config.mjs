@@ -22,29 +22,36 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
 
-  // Handle domain-specific routing
-  async middleware() {
-    return {
-      source: '/(.*)',
-      headers: async ({ headers, url }) => {
-        const host = headers.get('host')
-        
-        // Only allow learn routes on learn subdomain
-        if (host === 'test.trailacademy.net' && url.pathname.startsWith('/learn')) {
-          return Response.redirect('https://test.trailacademy.net')
-        }
-
-        // Serve learn content directly on learn subdomain
-        if (host === 'learn.trailacademy.net') {
-          return Response.rewrite(new URL('/learn' + url.pathname, url))
-        }
-
-        return headers
+  // Domain and route handling
+  async redirects() {
+    return [
+      // Redirect any attempts to access /learn on main domains to learn subdomain
+      {
+        source: '/learn/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'trailacademy.net',
+          },
+        ],
+        permanent: true,
+        destination: 'https://learn.trailacademy.net/:path*',
       },
-    }
+      {
+        source: '/learn/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'test.trailacademy.net',
+          },
+        ],
+        permanent: false,
+        destination: 'https://learn.trailacademy.net/:path*',
+      }
+    ]
   },
 
-  // Keep existing rewrites but modify for domain separation
+  // Handle domain-specific content
   async rewrites() {
     return {
       beforeFiles: [
@@ -57,22 +64,22 @@ const nextConfig = {
             },
           ],
           destination: '/learn/:path*',
-        },
+        }
       ],
       afterFiles: [
         {
           source: '/:path*',
           destination: '/:path*',
-        },
+        }
       ],
       fallback: [
         {
           source: '/:path*',
           destination: '/404',
-        },
-      ],
+        }
+      ]
     }
-  },
+  }
 }
 
 mergeConfig(nextConfig, userConfig)
