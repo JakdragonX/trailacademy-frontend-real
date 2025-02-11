@@ -34,7 +34,18 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Discord</h3>
+            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Company</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/about">Community</Link>
+              </li>
+              <li>
+                <Link href="/contact">Contact</Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-[#FAF6F1] mb-3">Connect</h3>
             <div className="flex space-x-4">
               <Link href="https://discord.gg/3n7KPDxdtZ" className="hover:text-[#FAF6F1]">
                 <LucideCable className="h-5 w-5" />
