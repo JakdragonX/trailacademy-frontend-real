@@ -22,20 +22,21 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
 
-  async rewrites() {
-    return [
-      {
-        source: "/:path*",
-        destination: "/:path*",
-      },
-      {
-        source: "/:path*",
-        destination: "/404",
-      },
-    ]
-  },
+  // Remove the previous rewrites temporarily for testing
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: "/:path*",
+  //       destination: "/:path*",
+  //     },
+  //     {
+  //       source: "/:path*",
+  //       destination: "/404",
+  //     },
+  //   ]
+  // },
 
-  // Add redirect configuration for learn subdomain
+  // Simplified domain handling for testing
   async redirects() {
     return [
       {
@@ -47,22 +48,7 @@ const nextConfig = {
           },
         ],
         destination: '/learn',
-        permanent: true,
-      },
-    ]
-  },
-
-  // Add domain configuration
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: 'https://learn.trailacademy.net',
-          },
-        ],
+        permanent: false, // Changed to false for testing
       },
     ]
   },
