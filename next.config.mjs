@@ -22,35 +22,56 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
 
-  // Remove the previous rewrites temporarily for testing
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: "/:path*",
-  //       destination: "/:path*",
-  //     },
-  //     {
-  //       source: "/:path*",
-  //       destination: "/404",
-  //     },
-  //   ]
-  // },
+  // Handle domain-specific routing
+  async middleware() {
+    return {
+      source: '/(.*)',
+      headers: async ({ headers, url }) => {
+        const host = headers.get('host')
+        
+        // Only allow learn routes on learn subdomain
+        if (host === 'test.trailacademy.net' && url.pathname.startsWith('/learn')) {
+          return Response.redirect('https://test.trailacademy.net')
+        }
 
-  // Simplified domain handling for testing
-  async redirects() {
-    return [
-      {
-        source: '/',
-        has: [
-          {
-            type: 'host',
-            value: 'learn.trailacademy.net',
-          },
-        ],
-        destination: '/learn',
-        permanent: false, // Changed to false for testing
+        // Serve learn content directly on learn subdomain
+        if (host === 'learn.trailacademy.net') {
+          return Response.rewrite(new URL('/learn' + url.pathname, url))
+        }
+
+        return headers
       },
-    ]
+    }
+  },
+
+  // Keep existing rewrites but modify for domain separation
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'host',
+              value: 'learn.trailacademy.net',
+            },
+          ],
+          destination: '/learn/:path*',
+        },
+      ],
+      afterFiles: [
+        {
+          source: '/:path*',
+          destination: '/:path*',
+        },
+      ],
+      fallback: [
+        {
+          source: '/:path*',
+          destination: '/404',
+        },
+      ],
+    }
   },
 }
 
