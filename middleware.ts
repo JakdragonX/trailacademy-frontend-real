@@ -1,4 +1,3 @@
-// middleware.ts
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -11,28 +10,29 @@ export async function middleware(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
     const path = request.nextUrl.pathname
 
+    console.log('Middleware check:', { hostname, path, isAuthenticated: !!session })
+
     // Handle learn subdomain
     if (hostname === 'learn.trailacademy.net') {
-      // Public paths that don't require auth
-      const publicPaths = ['/auth', '/_next', '/api']
-      const isPublicPath = publicPaths.some(p => path.startsWith(p))
-
-      // If logged in and accessing auth or root
-      if (session && (path === '/auth' || path === '/')) {
+      // If not authenticated, only allow auth routes
+      if (!session) {
+        const isAuthPath = path.startsWith('/auth') || 
+                          path.startsWith('/_next') || 
+                          path.startsWith('/api')
+        
+        if (!isAuthPath) {
+          return NextResponse.redirect(new URL('/auth', request.url))
+        }
+      } else if (path === '/') {
+        // If authenticated and at root, redirect to dashboard
         return NextResponse.redirect(new URL('/learn/dashboard', request.url))
       }
-
-      // If not logged in and trying to access protected route
-      if (!session && !isPublicPath) {
-        return NextResponse.redirect(new URL('/auth', request.url))
+    } else {
+      // On main domains (test.trailacademy.net, etc.)
+      // If authenticated and trying to access auth pages, redirect to learn domain
+      if (session && path.startsWith('/auth')) {
+        return NextResponse.redirect('https://learn.trailacademy.net/learn/dashboard')
       }
-
-      return res
-    }
-
-    // Handle main domains (trailacademy.net, test.trailacademy.net)
-    if (path.startsWith('/learn') || path.startsWith('/dashboard')) {
-      return NextResponse.redirect(`https://learn.trailacademy.net${path}`)
     }
 
     return res
