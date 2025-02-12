@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useAuth } from '@/src/lib/context/auth'
 import Link from 'next/link'
 import { 
   User, 
@@ -19,29 +18,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/src/components/shared/ui/dropdown-menu'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function UserMenu() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading } = useAuth()
   const supabase = createClientComponentClient()
   const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
   const isLearnDomain = hostname === 'learn.trailacademy.net'
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-      setLoading(false)
-    }
-
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user || null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -56,13 +39,13 @@ export default function UserMenu() {
     return (
       <div className="flex items-center gap-4">
         <Link 
-          href={isLearnDomain ? '/auth' : 'https://learn.trailacademy.net/auth'}
+          href="https://learn.trailacademy.net/auth"
           className="text-[#FAF6F1] hover:text-[#FAF6F1]/80 transition"
         >
           Log In
         </Link>
         <Link
-          href={isLearnDomain ? '/auth' : 'https://learn.trailacademy.net/auth'}
+          href="https://learn.trailacademy.net/auth"
           className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
         >
           Sign Up
@@ -86,19 +69,19 @@ export default function UserMenu() {
         <DropdownMenuLabel className="text-[#2D4F1E]">My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="https://learn.trailacademy.net/dashboard" className="cursor-pointer text-[#2D4F1E]">
+          <Link href="https://learn.trailacademy.net/learn/dashboard" className="cursor-pointer text-[#2D4F1E]">
             <GraduationCap className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="https://learn.trailacademy.net/grades" className="cursor-pointer text-[#2D4F1E]">
+          <Link href="https://learn.trailacademy.net/learn/grades" className="cursor-pointer text-[#2D4F1E]">
             <LineChart className="mr-2 h-4 w-4" />
             <span>Grade Report</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="https://learn.trailacademy.net/settings" className="cursor-pointer text-[#2D4F1E]">
+          <Link href="https://learn.trailacademy.net/learn/settings" className="cursor-pointer text-[#2D4F1E]">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </Link>

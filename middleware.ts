@@ -13,18 +13,13 @@ export async function middleware(request: NextRequest) {
 
     // Handle learn subdomain
     if (hostname === 'learn.trailacademy.net') {
-      // List of paths that don't require auth
+      // Public paths that don't require auth
       const publicPaths = ['/auth', '/_next', '/api']
       const isPublicPath = publicPaths.some(p => path.startsWith(p))
 
-      // If logged in and on auth page, redirect to dashboard
-      if (session && path.startsWith('/auth')) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-
-      // If logged in and on root or /learn, redirect to dashboard
-      if (session && (path === '/' || path === '/learn')) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+      // If logged in and accessing auth or root
+      if (session && (path === '/auth' || path === '/')) {
+        return NextResponse.redirect(new URL('/learn/dashboard', request.url))
       }
 
       // If not logged in and trying to access protected route
@@ -35,9 +30,8 @@ export async function middleware(request: NextRequest) {
       return res
     }
 
-    // Handle main domains (trailacademy.net, test.trailacademy.net, etc.)
-    if (path.startsWith('/dashboard') || path.startsWith('/learn')) {
-      // Always redirect learn-related paths to learn subdomain
+    // Handle main domains (trailacademy.net, test.trailacademy.net)
+    if (path.startsWith('/learn') || path.startsWith('/dashboard')) {
       return NextResponse.redirect(`https://learn.trailacademy.net${path}`)
     }
 
