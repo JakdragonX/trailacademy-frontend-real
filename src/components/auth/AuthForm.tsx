@@ -1,52 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '@/src/lib/supabase/client';
-import { createUserProfile } from '@/src/lib/auth/hooks';
+import { useEffect } from 'react'
+import { Auth } from '@supabase/auth-ui-react'
+import { ThemeSupa } from '@supabase/auth-ui-shared'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function AuthForm() {
-  const [origin, setOrigin] = useState<string>('')
+  const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    // Set origin once component mounts in browser
-    setOrigin(window.location.origin)
-  }, [])
-
-  useEffect(() => {
-    if (!origin) return;
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            // Create user profile if they're new
-            await createUserProfile({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name
-            });
-            
-            // Redirect to dashboard
-            window.location.href = 'https://learn.trailacademy.net';
-          } catch (error) {
-            console.error('Error handling sign in:', error);
-          }
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [origin]);
-
-  if (!origin) return null; // Don't render until we have the origin
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://learn.trailacademy.net'
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-md mx-auto">
       <Auth
         supabaseClient={supabase}
         appearance={{
@@ -61,8 +26,9 @@ export default function AuthForm() {
           },
         }}
         providers={['google']}
-        redirectTo={`${origin}/auth/callback`}
+        redirectTo={`${siteUrl}/auth/callback`}
+        onlyThirdPartyProviders={false}
       />
     </div>
-  );
+  )
 }
