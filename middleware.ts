@@ -6,27 +6,30 @@ export async function middleware(request: NextRequest) {
   try {
     const res = NextResponse.next()
     const supabase = createMiddlewareClient({ req: request, res })
-    
     const hostname = request.headers.get('host') || ''
-    const path = request.nextUrl.pathname
     const { data: { session } } = await supabase.auth.getSession()
 
-    // Handle learn subdomain
+    // Debug logs
+    console.log('Current hostname:', hostname)
+    console.log('Session exists:', !!session)
+    console.log('Current path:', request.nextUrl.pathname)
+
+    // Handle learn subdomain access
     if (hostname === 'learn.trailacademy.net') {
-      // Don't redirect auth-related paths
-      const isAuthPath = path.startsWith('/auth') || 
-                        path.startsWith('/_next') || 
-                        path.startsWith('/api')
-      
-      if (!session && !isAuthPath) {
+      // Paths that don't require auth
+      const publicPaths = ['/auth', '/_next', '/api', '/public']
+      const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+
+      if (!session && !isPublicPath) {
+        console.log('Redirecting to auth - No session found')
         return NextResponse.redirect(new URL('/auth', request.url))
       }
-      return res
-    }
 
-    // Handle main domain redirects to learn subdomain
-    if (path.startsWith('/learn')) {
-      return NextResponse.redirect(new URL(path, 'https://learn.trailacademy.net'))
+      // If authenticated and on auth page, redirect to dashboard
+      if (session && request.nextUrl.pathname.startsWith('/auth')) {
+        console.log('Redirecting to dashboard - User is authenticated')
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
     }
 
     return res
@@ -38,6 +41,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
