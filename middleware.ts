@@ -1,3 +1,4 @@
+// middleware.ts
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -21,8 +22,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
 
-      // If logged in and on root, redirect to dashboard
-      if (session && path === '/') {
+      // If logged in and on root or /learn, redirect to dashboard
+      if (session && (path === '/' || path === '/learn')) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
 
@@ -30,11 +31,14 @@ export async function middleware(request: NextRequest) {
       if (!session && !isPublicPath) {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
-    } else {
-      // On main domain, redirect any learn-related paths to learn subdomain
-      if (path.startsWith('/learn') || path.startsWith('/dashboard')) {
-        return NextResponse.redirect(`https://learn.trailacademy.net${path}`)
-      }
+
+      return res
+    }
+
+    // Handle main domains (trailacademy.net, test.trailacademy.net, etc.)
+    if (path.startsWith('/dashboard') || path.startsWith('/learn')) {
+      // Always redirect learn-related paths to learn subdomain
+      return NextResponse.redirect(`https://learn.trailacademy.net${path}`)
     }
 
     return res

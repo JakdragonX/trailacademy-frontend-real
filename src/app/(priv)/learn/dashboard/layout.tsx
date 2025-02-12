@@ -3,8 +3,6 @@
 import { useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/src/components/shared/Navbar'
-
 export default function DashboardLayout({
   children,
 }: {
@@ -26,7 +24,6 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#FAF6F1]">
-      <Navbar />
       {children}
     </div>
   )
