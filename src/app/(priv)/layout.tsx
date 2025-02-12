@@ -1,4 +1,4 @@
-import { Navbar } from '@/src/components/shared/Navbar'
+import Navbar from "@/src/components/shared/Navbar"
 
 export default function PrivateLayout({
   children,
