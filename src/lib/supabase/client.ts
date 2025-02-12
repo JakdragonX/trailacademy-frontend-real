@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 // Helper to clean environment variables
 const cleanEnvValue = (value: string | undefined) => {
@@ -17,7 +18,13 @@ if (!supabaseAnonKey) {
   throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
 }
 
+// Create the regular client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Create component client for use in components
+export const createComponentClient = () => {
+  return createClientComponentClient()
+}
 
 // Admin client - only use server-side
 export const createAdminClient = () => {

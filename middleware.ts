@@ -1,3 +1,4 @@
+// middleware.ts
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -9,6 +10,12 @@ export async function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const { data: { session } } = await supabase.auth.getSession()
     const path = request.nextUrl.pathname
+
+    // Add cookie domain header for cross-domain auth
+    res.headers.append(
+      'Set-Cookie',
+      `sb-auth-token=; Domain=.trailacademy.net; Path=/; SameSite=Lax`
+    )
 
     console.log('Middleware check:', { hostname, path, isAuthenticated: !!session })
 

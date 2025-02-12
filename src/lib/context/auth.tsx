@@ -2,7 +2,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createComponentClient } from '@/src/lib/supabase/client'
 
 const AuthContext = createContext<{
   user: any
@@ -17,7 +17,7 @@ const AuthContext = createContext<{
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const supabase = createComponentClient()
 
   // Handle sign out across all domains
   const signOut = async () => {
@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        console.log('Current session:', session?.user?.email)
         setUser(session?.user || null)
         
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Handle sign in/out redirects
           if (event === 'SIGNED_IN') {
-            window.location.href = 'https://learn.trailacademy.net/learn/dashboard'
+            window.location.href = `https://learn.trailacademy.net/learn/dashboard`
           }
         })
 
@@ -51,14 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth()
   }, [])
 
-  const value = {
-    user,
-    loading,
-    signOut
-  }
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )
