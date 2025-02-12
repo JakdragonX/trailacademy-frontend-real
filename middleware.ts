@@ -1,39 +1,53 @@
+// middleware.ts
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getMainUrl, getLearnUrl } from '@/src/lib/config/domains'
 
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req: request, res })
   const hostname = request.headers.get('host') || ''
-
-  // Check if on learn subdomain
   const isLearnDomain = hostname.startsWith('learn.')
+  const { pathname } = request.nextUrl
   
-  // Get session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // Create response to modify
+  const res = NextResponse.next()
+  
+  // Initialize Supabase client
+  const supabase = createMiddlewareClient({ req: request, res })
+  
+  // Get session - this needs to be done before any redirects
+  const { data: { session } } = await supabase.auth.getSession()
 
-  // Handle learn subdomain routing
+  // Learn domain specific rules
   if (isLearnDomain) {
-    // If not authenticated on learn domain, redirect to main site auth
+    // Always require authentication on learn domain
     if (!session) {
-      return NextResponse.redirect(getMainUrl('/auth'))
+      // Store the attempted URL to redirect back after auth
+      const redirectUrl = getMainUrl(`/auth?returnTo=${encodeURIComponent(request.url)}`)
+      return NextResponse.redirect(redirectUrl)
     }
 
-    // If authenticated but on root of learn domain, redirect to dashboard
-    if (request.nextUrl.pathname === '/') {
+    // If on root of learn domain, redirect to dashboard
+    if (pathname === '/') {
+      return NextResponse.redirect(getLearnUrl('/learn/dashboard'))
+    }
+
+    // Only allow access to (priv) routes on learn domain
+    if (!pathname.startsWith('/learn') && !pathname.startsWith('/api')) {
       return NextResponse.redirect(getLearnUrl('/learn/dashboard'))
     }
   }
 
-  // Handle main domain auth routes
+  // Main domain specific rules
   if (!isLearnDomain) {
-    // If authenticated user tries to access auth page on main domain, redirect to learn domain
-    if (session && request.nextUrl.pathname.startsWith('/auth')) {
+    // If authenticated user tries to access auth page on main domain
+    if (session && pathname.startsWith('/auth')) {
       return NextResponse.redirect(getLearnUrl('/learn/dashboard'))
+    }
+
+    // Block access to private routes on main domain
+    if (pathname.startsWith('/learn/')) {
+      return NextResponse.redirect(getMainUrl())
     }
   }
 
@@ -42,7 +56,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/(.*)',
-    '/((?!_next/static|_next/image|favicon.ico|api).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

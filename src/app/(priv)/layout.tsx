@@ -1,22 +1,41 @@
-// src/app/(priv)/layout.tsx
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { getMainUrl } from '@/src/lib/config/domains'
-import Navbar from "@/src/components/shared/Navbar"
+'use client'
 
-export default async function PrivateLayout({
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/src/lib/context/auth'
+import Navbar from "@/src/components/shared/Navbar"
+import { getMainUrl } from '@/src/lib/config/domains'
+
+export default function PrivateLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Server-side domain check
-  const headersList = await headers()
-  const host = headersList.get('host') || ''
-  const isLearnDomain = host.startsWith('learn.')
+  const { user, loading } = useAuth()
+  const router = useRouter()
 
-  // If not on learn domain, redirect to main site
-  if (!isLearnDomain) {
-    redirect(getMainUrl())
+  useEffect(() => {
+    // Check if we're on the learn domain
+    const isLearnDomain = window.location.hostname.startsWith('learn.')
+    
+    if (!isLearnDomain) {
+      window.location.href = getMainUrl()
+      return
+    }
+
+    // If not loading and no user, redirect to auth
+    if (!loading && !user) {
+      window.location.href = getMainUrl('/auth')
+    }
+  }, [user, loading])
+
+  // Show loading state while checking auth
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-[#FAF6F1] flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    )
   }
 
   return (
