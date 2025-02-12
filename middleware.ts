@@ -9,26 +9,26 @@ export async function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const { data: { session } } = await supabase.auth.getSession()
 
-    // Debug logs
-    console.log('Current hostname:', hostname)
-    console.log('Session exists:', !!session)
-    console.log('Current path:', request.nextUrl.pathname)
-
-    // Handle learn subdomain access
+    // Handle learn subdomain
     if (hostname === 'learn.trailacademy.net') {
-      // Paths that don't require auth
-      const publicPaths = ['/auth', '/_next', '/api', '/public']
-      const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+      const path = request.nextUrl.pathname
+      const isPublicPath = path.startsWith('/auth') || 
+                          path.startsWith('/_next') || 
+                          path.startsWith('/api')
 
-      if (!session && !isPublicPath) {
-        console.log('Redirecting to auth - No session found')
-        return NextResponse.redirect(new URL('/auth', request.url))
+      // If logged in and trying to access auth page, redirect to dashboard
+      if (session && path.startsWith('/auth')) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
 
-      // If authenticated and on auth page, redirect to dashboard
-      if (session && request.nextUrl.pathname.startsWith('/auth')) {
-        console.log('Redirecting to dashboard - User is authenticated')
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+      // If not logged in and trying to access protected route
+      if (!session && !isPublicPath) {
+        return NextResponse.redirect(new URL('/auth', request.url))
+      }
+    } else {
+      // Handle main domain redirects
+      if (request.nextUrl.pathname.startsWith('/learn')) {
+        return NextResponse.redirect(`https://learn.trailacademy.net${request.nextUrl.pathname}`)
       }
     }
 

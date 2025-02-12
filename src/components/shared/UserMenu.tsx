@@ -24,6 +24,8 @@ export default function UserMenu() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
+  const isLearnDomain = hostname === 'learn.trailacademy.net'
 
   useEffect(() => {
     const getUser = async () => {
@@ -43,7 +45,7 @@ export default function UserMenu() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = isLearnDomain ? '/auth' : '/'
   }
 
   if (loading) {
@@ -54,13 +56,13 @@ export default function UserMenu() {
     return (
       <div className="flex items-center gap-4">
         <Link 
-          href="/auth" 
+          href={isLearnDomain ? '/auth' : 'https://learn.trailacademy.net/auth'}
           className="text-[#FAF6F1] hover:text-[#FAF6F1]/80 transition"
         >
           Log In
         </Link>
         <Link
-          href="/auth"
+          href={isLearnDomain ? '/auth' : 'https://learn.trailacademy.net/auth'}
           className="bg-[#FAF6F1] text-[#2D4F1E] px-4 py-2 rounded-full hover:bg-[#FAF6F1]/90 transition"
         >
           Sign Up
@@ -74,29 +76,29 @@ export default function UserMenu() {
       <DropdownMenuTrigger className="flex items-center gap-2 text-[#FAF6F1] hover:text-[#FAF6F1]/80 transition">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-[#8B4513] flex items-center justify-center">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 text-[#FAF6F1]" />
           </div>
           <span>{user.email}</span>
           <ChevronDown className="h-4 w-4" />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-56 bg-white">
+        <DropdownMenuLabel className="text-[#2D4F1E]">My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="cursor-pointer">
+          <Link href="https://learn.trailacademy.net/dashboard" className="cursor-pointer text-[#2D4F1E]">
             <GraduationCap className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/grades" className="cursor-pointer">
+          <Link href="https://learn.trailacademy.net/grades" className="cursor-pointer text-[#2D4F1E]">
             <LineChart className="mr-2 h-4 w-4" />
             <span>Grade Report</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer">
+          <Link href="https://learn.trailacademy.net/settings" className="cursor-pointer text-[#2D4F1E]">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </Link>

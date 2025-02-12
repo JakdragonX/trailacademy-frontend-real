@@ -5,22 +5,24 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createUserProfile } from '@/src/lib/auth/hooks';
+import { useRouter } from 'next/navigation';
 
 export default function AuthForm() {
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const supabase = createClientComponentClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://learn.trailacademy.net';
 
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        window.location.href = `${siteUrl}/dashboard`;
+        // If already logged in, redirect to dashboard
+        router.replace('/dashboard');
       }
       setLoading(false);
     };
     checkSession();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -33,7 +35,7 @@ export default function AuthForm() {
               email: session.user.email,
               full_name: session.user.user_metadata?.full_name
             });
-            window.location.href = `${siteUrl}/dashboard`;
+            router.replace('/dashboard');
           } catch (error) {
             console.error('Error handling sign in:', error);
           }
@@ -42,10 +44,10 @@ export default function AuthForm() {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center p-4">Loading...</div>;
   }
 
   return (
@@ -64,7 +66,7 @@ export default function AuthForm() {
           },
         }}
         providers={['google']}
-        redirectTo={`${siteUrl}/auth/callback`}
+        redirectTo="https://learn.trailacademy.net/auth/callback"
         magicLink={true}
       />
     </div>
