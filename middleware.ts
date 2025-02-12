@@ -8,16 +8,21 @@ export async function middleware(request: NextRequest) {
     const supabase = createMiddlewareClient({ req: request, res })
     const hostname = request.headers.get('host') || ''
     const { data: { session } } = await supabase.auth.getSession()
+    const path = request.nextUrl.pathname
 
     // Handle learn subdomain
     if (hostname === 'learn.trailacademy.net') {
-      const path = request.nextUrl.pathname
-      const isPublicPath = path.startsWith('/auth') || 
-                          path.startsWith('/_next') || 
-                          path.startsWith('/api')
+      // List of paths that don't require auth
+      const publicPaths = ['/auth', '/_next', '/api']
+      const isPublicPath = publicPaths.some(p => path.startsWith(p))
 
-      // If logged in and trying to access auth page, redirect to dashboard
+      // If logged in and on auth page, redirect to dashboard
       if (session && path.startsWith('/auth')) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+
+      // If logged in and on root, redirect to dashboard
+      if (session && path === '/') {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
 
@@ -26,9 +31,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
     } else {
-      // Handle main domain redirects
-      if (request.nextUrl.pathname.startsWith('/learn')) {
-        return NextResponse.redirect(`https://learn.trailacademy.net${request.nextUrl.pathname}`)
+      // On main domain, redirect any learn-related paths to learn subdomain
+      if (path.startsWith('/learn') || path.startsWith('/dashboard')) {
+        return NextResponse.redirect(`https://learn.trailacademy.net${path}`)
       }
     }
 
@@ -41,6 +46,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 }
